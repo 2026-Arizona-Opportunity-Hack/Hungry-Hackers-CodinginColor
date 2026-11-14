@@ -7,7 +7,8 @@ import { ArrowRight, Check, ChevronLeft, Lock, PartyPopper, TrendingUp } from "l
 import { CheckActivity, ExitActivity, QuizActivity, SlidesActivity, WorksheetActivity, type Completion } from "@/components/activities";
 import { CodeActivity } from "@/components/code-activity";
 import { Confetti } from "@/components/confetti";
-import { Card, LinkButton, Loading, Minutes, cx } from "@/components/ui";
+import { Brackets, Card, LinkButton, Loading, Minutes, cx } from "@/components/ui";
+import { STAGE_ICONS } from "@/components/stage-icon";
 import { isDone, moduleGain, moduleUnlocked, pct, signedPct } from "@/lib/analytics";
 import { recordFailedCheck, recordResult } from "@/lib/repo";
 import { STAGE_LABELS, type Activity } from "@/lib/types";
@@ -84,18 +85,28 @@ export default function LessonPlayer() {
       <p className="mt-2 text-sm font-bold text-cic-muted">
         Module {mod.number} of {modules.length}
       </p>
-      <p className="text-2xl font-bold">{mod.title}</p>
+      <p className="font-display text-2xl text-black md:text-3xl">{mod.title}</p>
 
       {/* Stage stepper */}
-      <ol aria-label="Lesson steps" className="mt-4 flex gap-1 overflow-x-auto pb-2">
+      <ol aria-label="Lesson steps" className="mt-5 flex gap-2 overflow-x-auto pb-2">
         {mod.activities.map((a, i) => {
           const done = isDone(progress, a.id);
           const now = i === index;
+          const Icon = done ? Check : STAGE_ICONS[a.kind];
           return (
-            <li key={a.id} aria-current={now ? "step" : undefined} className="min-w-24 flex-1">
-              <div className={cx("h-2 rounded-full transition-colors duration-500", done ? "bg-cic-green" : now ? "bg-cic-dark" : "bg-cic-tint ring-1 ring-cic-line ring-inset")} />
-              <p className={cx("mt-1 flex items-center gap-1 text-xs font-bold", now ? "text-cic-dark" : "text-cic-muted")}>
-                {done && <Check aria-hidden className="size-3.5" />}
+            <li key={a.id} aria-current={now ? "step" : undefined} className="flex min-w-20 flex-1 flex-col items-center">
+              <span
+                className={cx(
+                  "grid size-11 place-items-center rounded-2xl transition-colors duration-500",
+                  done && "bg-cic-green text-white",
+                  now && "animate-pop bg-cic-dark text-white shadow-slab",
+                  !done && !now && "bg-cic-tint text-cic-dark",
+                )}
+              >
+                <Icon aria-hidden className="size-5" strokeWidth={done ? 3 : 2} />
+              </span>
+              <div className={cx("mt-2 h-1.5 w-full rounded-full", done ? "bg-cic-green" : now ? "bg-cic-dark" : "bg-cic-tint")} />
+              <p className={cx("mt-1 text-center text-xs font-bold", now ? "text-cic-dark" : "text-cic-muted")}>
                 {STAGE_LABELS[a.kind]}
                 <span className="sr-only">{done ? " — done" : now ? " — current step" : " — not started"}</span>
               </p>
@@ -107,7 +118,7 @@ export default function LessonPlayer() {
       {current ? (
         <div key={current.id} className="mt-6 animate-rise">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-            <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-cic-dark md:text-3xl">
+            <h1 ref={headingRef} tabIndex={-1} className="font-display text-2xl text-cic-dark md:text-3xl">
               {current.title}
             </h1>
             <Minutes n={current.minutes} />
@@ -120,48 +131,51 @@ export default function LessonPlayer() {
           {current.kind === "exit" && <ExitActivity key={current.id} activity={current} onComplete={complete} />}
         </div>
       ) : (
-        <Card className="relative mt-6 animate-rise border-2 border-cic-dark">
+        <section className="relative mt-6 animate-rise overflow-hidden rounded-[24px] bg-cic-dark p-6 text-white shadow-slab md:p-10">
           {justFinished && <Confetti />}
-          <div role="status">
-            <PartyPopper aria-hidden className="size-10 animate-pop text-cic-dark" />
-            <h1 className="mt-2 text-2xl font-bold text-cic-dark">
-              {justFinished ? `Module ${mod.number} complete!` : `You've finished Module ${mod.number}`}
+          <Brackets className="pointer-events-none absolute -right-12 -bottom-10 w-80 text-cic-green opacity-40" />
+          <div role="status" className="relative text-center">
+            <PartyPopper aria-hidden className="mx-auto size-14 animate-pop" />
+            <h1 className="mt-3 font-display text-3xl leading-tight md:text-5xl">
+              {justFinished ? "Congratulations!" : `You've finished Module ${mod.number}`}
             </h1>
-            <p className="mt-1">+{mod.activities.length * 10} XP earned in this module.</p>
+            <p className="mx-auto mt-2 max-w-prose text-lg text-cic-tint">
+              {justFinished ? `You finished Module ${mod.number}: ${mod.title}. ` : ""}+{mod.activities.length * 10} XP earned.
+            </p>
           </div>
           {gain.gain !== null && (
-            <div className="stagger mt-5 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl bg-cic-tint p-4">
-                <p className="text-sm text-cic-muted">Warm-up</p>
-                <p className="text-2xl font-bold">{pct(gain.pre)}</p>
+            <div className="stagger relative mx-auto mt-6 grid max-w-2xl gap-3 text-black sm:grid-cols-3">
+              <div className="rounded-2xl bg-white p-4 text-center shadow-slab">
+                <p className="text-sm font-bold text-cic-muted">Warm-up</p>
+                <p className="font-display text-3xl">{pct(gain.pre)}</p>
               </div>
-              <div className="rounded-xl bg-cic-tint p-4">
-                <p className="text-sm text-cic-muted">Wrap-up</p>
-                <p className="text-2xl font-bold">{pct(gain.post)}</p>
+              <div className="rounded-2xl bg-white p-4 text-center shadow-slab">
+                <p className="text-sm font-bold text-cic-muted">Wrap-up</p>
+                <p className="font-display text-3xl">{pct(gain.post)}</p>
               </div>
-              <div className="rounded-xl bg-cic-dark p-4 text-white">
-                <p className="flex items-center gap-1 text-sm">
-                  <TrendingUp aria-hidden className="size-4" /> Your learning gain
+              <div className="rounded-2xl bg-cic-darker p-4 text-center text-white shadow-[0_4px_0_#003d1f]">
+                <p className="flex items-center justify-center gap-1 text-sm font-bold">
+                  <TrendingUp aria-hidden className="size-4" /> Learning gain
                 </p>
-                <p className="text-2xl font-bold">{signedPct(gain.gain)}</p>
+                <p className="font-display text-3xl">{signedPct(gain.gain)}</p>
               </div>
             </div>
           )}
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="relative mt-8 flex flex-wrap justify-center gap-3">
             {nextModule ? (
-              <LinkButton href={`/learn/lesson/${nextModule.id}`}>
+              <LinkButton href={`/learn/lesson/${nextModule.id}`} variant="light" className="text-lg">
                 Start Module {nextModule.number}: {nextModule.title} <ArrowRight aria-hidden className="size-5" />
               </LinkButton>
             ) : (
-              <LinkButton href="/learn/results">
+              <LinkButton href="/learn/results" variant="light" className="text-lg">
                 See my growth <ArrowRight aria-hidden className="size-5" />
               </LinkButton>
             )}
-            <LinkButton href="/learn/results" variant="secondary">
+            <LinkButton href="/learn/results" variant="ghost" className="text-white hover:bg-cic-darker">
               My progress
             </LinkButton>
           </div>
-        </Card>
+        </section>
       )}
     </div>
   );

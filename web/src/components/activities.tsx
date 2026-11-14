@@ -30,11 +30,11 @@ export function SlidesActivity({ activity, onComplete }: ActivityProps<"slides">
         aria-roledescription="slide"
         aria-label={`Slide ${i + 1} of ${activity.slides.length}`}
         className={cx(
-          "flex min-h-72 animate-rise flex-col justify-center rounded-[var(--radius-card)] border-2 border-cic-line p-6 md:min-h-80 md:p-10",
+          "flex min-h-72 animate-rise flex-col justify-center rounded-[24px] border-2 border-cic-line bg-white p-6 shadow-slab-gray md:min-h-80 md:p-10",
           slide.divider && "items-center text-center",
         )}
       >
-        <h2 className={cx("font-bold", slide.divider ? "text-3xl md:text-4xl" : "text-2xl text-cic-dark")}>{slide.title}</h2>
+        <h2 className={cx("font-display leading-tight", slide.divider ? "text-3xl md:text-5xl" : "text-2xl text-cic-dark md:text-3xl")}>{slide.title}</h2>
         {slide.bullets.length > 0 && (
           <ul className={cx("mt-4 space-y-2 text-lg", !slide.divider && "list-disc pl-6")}>
             {slide.bullets.map((b) => (
@@ -89,12 +89,12 @@ function QuestionCard({
 }) {
   const name = useId();
   return (
-    <fieldset className="rounded-[var(--radius-card)] border-2 border-cic-line p-5">
+    <fieldset className="rounded-[var(--radius-card)] border-2 border-cic-line bg-white p-5 shadow-slab-gray">
       <legend className="px-1 text-lg font-bold">
         {index + 1}. {q.prompt}
       </legend>
       {q.code && <pre className="mt-2 overflow-x-auto rounded-xl bg-cic-tint p-4 font-mono">{q.code}</pre>}
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {q.choices.map((c, ci) => {
           const checked = value === ci;
           const correct = reveal && ci === q.answerIndex;
@@ -103,8 +103,15 @@ function QuestionCard({
             <label
               key={c}
               className={cx(
-                "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-2",
-                correct ? "border-cic-dark bg-cic-tint" : wrong ? "border-cic-danger bg-cic-danger-bg" : checked ? "border-cic-dark" : "border-cic-line",
+                "flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl border-2 px-3 py-2 font-bold transition-[transform,box-shadow,background-color] duration-100",
+                "has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-cic-dark",
+                correct
+                  ? "animate-pop border-cic-dark bg-cic-tint shadow-slab"
+                  : wrong
+                    ? "animate-shake border-cic-danger bg-cic-danger-bg shadow-[0_4px_0_#a4161a]"
+                    : checked
+                      ? "translate-y-[2px] border-cic-dark bg-cic-tint shadow-[0_2px_0_var(--color-cic-dark)]"
+                      : "border-cic-line bg-white shadow-slab-gray hover:bg-cic-tint",
                 disabled && "cursor-default",
               )}
             >
@@ -114,8 +121,17 @@ function QuestionCard({
                 checked={checked}
                 disabled={disabled}
                 onChange={() => onChange(ci)}
-                className="size-5 accent-[#007a3d]"
+                className="sr-only"
               />
+              <span
+                aria-hidden
+                className={cx(
+                  "grid size-10 shrink-0 place-items-center rounded-xl font-display",
+                  checked || correct ? "bg-cic-dark text-white" : "bg-cic-tint text-cic-dark",
+                )}
+              >
+                {"ABCDEF"[ci]}
+              </span>
               <span className="flex-1">{c}</span>
               {correct && (
                 <span className="inline-flex items-center gap-1 text-sm font-bold text-cic-darker">

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AlertTriangle, CircleDashed, Copy, GraduationCap, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
-import { Button, Card, EmptyState, KpiCard, LinkButton, Loading, PageTitle, StatusBadge } from "@/components/ui";
+import { Button, Card, EmptyState, HeroPanel, KpiCard, LinkButton, Loading, StatusBadge } from "@/components/ui";
 import {
   STUCK_FAILED_CHECKS,
   STUCK_IDLE_DAYS,
@@ -51,24 +51,25 @@ export default function TeacherOverview() {
 
   return (
     <div>
-      <PageTitle
-        title={cls.name}
-        subtitle={
-          <>
-            {cls.school} · Updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-          </>
-        }
-      />
-
-      <Card className="mb-6 flex flex-wrap items-center gap-4 bg-cic-tint">
-        <div className="flex-1">
-          <p className="text-sm font-bold text-cic-muted">Class code — students join at {joinUrl}</p>
-          <p className="font-mono text-3xl font-bold tracking-widest text-cic-darker">{cls.code}</p>
+      <HeroPanel className="mb-6">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="font-bold text-cic-tint">
+              {cls.school}, updated {loadedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+            </p>
+            <h1 className="mt-1 font-display text-3xl leading-tight md:text-4xl">{cls.name}</h1>
+          </div>
+          <div className="rounded-2xl bg-white p-4 text-black shadow-slab">
+            <p className="text-sm font-bold text-cic-muted">Students join at {joinUrl} with</p>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <p className="font-display text-4xl tracking-[0.2em] text-cic-darker">{cls.code}</p>
+              <Button variant="secondary" onClick={copyCode} className="min-h-11 px-4">
+                <Copy aria-hidden className="size-4" /> {copied ? "Copied!" : "Copy"}
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button variant="secondary" onClick={copyCode}>
-          <Copy aria-hidden className="size-4" /> {copied ? "Copied!" : "Copy join message"}
-        </Button>
-      </Card>
+      </HeroPanel>
 
       <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard Icon={Users} label="Students" value={String(cls.roster.length)} note={`${rows.length - notStarted.length} have started`} />
@@ -84,7 +85,7 @@ export default function TeacherOverview() {
 
       <div className="stagger mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
-          <h2 className="flex items-center gap-2 text-lg font-bold">
+          <h2 className="flex items-center gap-2 text-xl font-bold">
             <AlertTriangle aria-hidden className="size-5 text-cic-danger" /> Who needs help
           </h2>
           <p className="text-sm text-cic-muted">
@@ -110,7 +111,7 @@ export default function TeacherOverview() {
         </Card>
 
         <Card>
-          <h2 className="flex items-center gap-2 text-lg font-bold">
+          <h2 className="flex items-center gap-2 text-xl font-bold">
             <CircleDashed aria-hidden className="size-5 text-cic-warn" /> Not started yet
           </h2>
           <p className="text-sm text-cic-muted">They can start any time — the course shows them exactly where to begin.</p>
@@ -128,7 +129,7 @@ export default function TeacherOverview() {
         </Card>
 
         <Card>
-          <h2 className="text-lg font-bold">Module completion</h2>
+          <h2 className="text-xl font-bold">Module completion</h2>
           <ul className="mt-4 space-y-3">
             {modules.map((m) => {
               const n = rows.filter((r) => moduleComplete(r.p, m)).length;
@@ -142,7 +143,7 @@ export default function TeacherOverview() {
                       {n} of {rows.length} students
                     </span>
                   </div>
-                  <div className="mt-1 h-3 overflow-hidden rounded-full bg-cic-tint ring-1 ring-cic-line ring-inset" aria-hidden>
+                  <div className="mt-1 h-4 overflow-hidden rounded-full bg-cic-tint" aria-hidden>
                     <div className="h-full origin-left animate-grow bg-cic-green" style={{ width: `${(n / rows.length) * 100}%` }} />
                   </div>
                 </li>
@@ -152,7 +153,7 @@ export default function TeacherOverview() {
         </Card>
 
         <Card>
-          <h2 className="text-lg font-bold">Concept mastery</h2>
+          <h2 className="text-xl font-bold">Concept mastery</h2>
           <p className="text-sm text-cic-muted">Share of quiz answers correct, weakest concepts first.</p>
           <table className="mt-3 w-full text-left text-sm">
             <caption className="sr-only">Concept mastery for this class</caption>

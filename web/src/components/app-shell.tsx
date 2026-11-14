@@ -37,12 +37,12 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh bg-white">
-      <header className="sticky top-0 z-30 border-b-2 border-cic-dark bg-white">
+      <header className="sticky top-0 z-30 border-b-2 border-cic-line bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
           <Link href="/" className="shrink-0" aria-label="Coding in Color home">
             <Logo className="h-9 w-auto" />
           </Link>
-          <span className="hidden rounded-full bg-cic-tint px-3 py-1 text-sm font-bold text-cic-darker sm:inline">
+          <span className="hidden rounded-full bg-cic-dark px-3 py-1 text-sm font-bold text-white sm:inline">
             {roleLabel}
           </span>
           <div className="ml-auto flex items-center gap-3">{topRight}</div>
@@ -50,8 +50,8 @@ export function AppShell({
       </header>
 
       <div className="mx-auto flex max-w-7xl">
-        <nav aria-label="Main" className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-56 shrink-0 border-r border-cic-line p-3 md:block">
-          <ul className="space-y-1">
+        <nav aria-label="Main" className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-60 shrink-0 p-4 md:block">
+          <ul className="space-y-2">
             {nav.map((item) => {
               const on = item === active;
               return (
@@ -60,11 +60,13 @@ export function AppShell({
                     href={item.href}
                     aria-current={on ? "page" : undefined}
                     className={cx(
-                      "flex min-h-11 items-center gap-3 rounded-xl px-3 font-bold",
-                      on ? "bg-cic-dark text-white" : "text-black hover:bg-cic-tint",
+                      "flex min-h-12 items-center gap-3 rounded-2xl px-3 font-bold transition-colors",
+                      on ? "bg-cic-dark text-white shadow-slab" : "text-black hover:bg-cic-tint",
                     )}
                   >
-                    <item.Icon aria-hidden className="size-5" />
+                    <span className={cx("grid size-8 place-items-center rounded-xl", on ? "bg-white/15" : "bg-cic-tint text-cic-dark")}>
+                      <item.Icon aria-hidden className="size-5" />
+                    </span>
                     {item.label}
                   </Link>
                 </li>
@@ -78,7 +80,7 @@ export function AppShell({
         </main>
       </div>
 
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 border-t border-cic-line bg-white md:hidden">
+      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-cic-line bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
         <ul className="flex">
           {nav.slice(0, 5).map((item) => {
             const on = item === active;
@@ -92,9 +94,10 @@ export function AppShell({
                     on ? "text-cic-dark" : "text-cic-muted",
                   )}
                 >
-                  <item.Icon aria-hidden className={cx("size-5", on && "text-cic-dark")} />
+                  <span className={cx("grid h-8 w-12 place-items-center rounded-full transition-colors", on && "bg-cic-dark text-white")}>
+                    <item.Icon aria-hidden className="size-5" />
+                  </span>
                   {item.label}
-                  {on && <span aria-hidden className="mt-0.5 h-1 w-6 rounded-full bg-cic-dark" />}
                 </Link>
               </li>
             );
