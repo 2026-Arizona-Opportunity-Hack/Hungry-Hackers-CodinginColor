@@ -20,7 +20,7 @@ export default function CourseRoadmap() {
       />
       <p className="-mt-2 mb-6 max-w-prose">{course.description}</p>
 
-      <ol aria-label="Course modules" className="relative space-y-4">
+      <ol aria-label="Course modules" className="stagger relative space-y-4">
         {modules.map((m, i) => {
           const done = moduleComplete(progress, m);
           const open = moduleUnlocked(progress, modules, i);

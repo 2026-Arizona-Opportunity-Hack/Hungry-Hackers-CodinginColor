@@ -26,10 +26,11 @@ export function SlidesActivity({ activity, onComplete }: ActivityProps<"slides">
   return (
     <div>
       <div
+        key={i}
         aria-roledescription="slide"
         aria-label={`Slide ${i + 1} of ${activity.slides.length}`}
         className={cx(
-          "flex min-h-72 flex-col justify-center rounded-[var(--radius-card)] border-2 border-cic-line p-6 md:min-h-80 md:p-10",
+          "flex min-h-72 animate-rise flex-col justify-center rounded-[var(--radius-card)] border-2 border-cic-line p-6 md:min-h-80 md:p-10",
           slide.divider && "items-center text-center",
         )}
       >
@@ -170,7 +171,7 @@ export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" |
         />
       ))}
       {submitted ? (
-        <div role="status" className="rounded-[var(--radius-card)] border-2 border-cic-dark bg-cic-tint p-5">
+        <div role="status" className="animate-pop rounded-[var(--radius-card)] border-2 border-cic-dark bg-cic-tint p-5">
           <p className="text-xl font-bold">
             You got {Math.round(score * activity.questions.length)} of {activity.questions.length} right.
           </p>
@@ -226,7 +227,7 @@ export function CheckActivity({ activity, onComplete, onFailedCheck }: ActivityP
       />
       <div aria-live="polite">
         {state === "wrong" && (
-          <div className="flex gap-3 rounded-xl bg-cic-warn-bg p-4 text-cic-warn">
+          <div key={attempts} className="flex animate-shake gap-3 rounded-xl bg-cic-warn-bg p-4 text-cic-warn">
             <Lightbulb aria-hidden className="size-5 shrink-0" />
             <p>
               <strong>Not quite — here&apos;s a hint:</strong> {q.hint}
@@ -234,7 +235,7 @@ export function CheckActivity({ activity, onComplete, onFailedCheck }: ActivityP
           </div>
         )}
         {state === "right" && (
-          <div className="flex gap-3 rounded-xl bg-cic-tint p-4 text-cic-darker">
+          <div className="flex animate-pop gap-3 rounded-xl bg-cic-tint p-4 text-cic-darker">
             <CheckCircle2 aria-hidden className="size-5 shrink-0" />
             <p>
               <strong>Nice!</strong> {q.explanation}
