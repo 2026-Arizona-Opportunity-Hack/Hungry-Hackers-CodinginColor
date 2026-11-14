@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/*
+ * Coding in Color brand tokens (Brand Guidelines v2), adjusted for WCAG 2.2 AA:
+ * - cic-dark  #007A3D  5.5:1 on white  -> buttons, headings, links, nav
+ * - cic-green #00A850  3.1:1 on white  -> NON-TEXT accents only (bars, checks, rings)
+ * - cic-line  #C8C8C8  1.7:1 on white  -> borders/dividers only, never text
+ * - cic-muted #595959  7.0:1 on white  -> captions and secondary text
+ */
+@theme {
+  --color-cic-green: #00a850;
+  --color-cic-dark: #007a3d;
+  --color-cic-darker: #005c2e;
+  --color-cic-tint: #e6f4ed;
+  --color-cic-line: #c8c8c8;
+  --color-cic-muted: #595959;
+  --color-cic-warn-bg: #fff4e5;
+  --color-cic-warn: #8a4b00;
+  --color-cic-danger-bg: #fdecec;
+  --color-cic-danger: #a4161a;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, ui-monospace, monospace;
+  --radius-card: 14px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: #ffffff;
+}
+
+body {
+  background: #ffffff;
+  color: #000000;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Visible, consistent focus for keyboard users (WCAG 2.4.7 / 2.4.11). */
+:focus-visible {
+  outline: 3px solid #007a3d;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  background: #007a3d;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.cm-editor {
+  font-size: 15px;
+  min-height: 220px;
+}
+.cm-editor.cm-focused {
+  outline: 3px solid #007a3d !important;
+  outline-offset: 2px;
+}
