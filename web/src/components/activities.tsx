@@ -42,7 +42,7 @@ export function SlidesActivity({ activity, onComplete }: ActivityProps<"slides">
           </ul>
         )}
         {slide.ourProject && (
-          <div className="mt-5 rounded-xl border-l-4 border-cic-dark bg-cic-tint p-4">
+          <div className="mt-5 rounded-xl border border-cic-line bg-cic-tint p-4">
             <p className="font-mono text-sm font-bold text-cic-darker">Our project:</p>
             <p className="mt-1">{slide.ourProject}</p>
           </div>
