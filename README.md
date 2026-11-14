@@ -49,29 +49,45 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 
 ## What we built
 
-<!-- Two or three sentences: the problem, who it helps, what the nonprofit can do now that they couldn't before -->
+**CIC Learn** — a self-paced course platform for Coding in Color. A teacher creates a class, uploads a roster CSV and shares one class code. Students join with the code, pick their name and tap a 3-picture code (no email, no passwords), then work through each module on their own: warm-up quiz → slides → quick check → practice or real Python in the browser → exit question → wrap-up quiz. Teachers see live progress, **learning gain** (wrap-up minus warm-up), concept mastery and a "who needs help" list. The first course, *Intro to Artificial Intelligence*, is built from CIC's own slide deck.
+
+**Try the demo** (`npm run dev`, then open http://localhost:3000):
+
+| Role | How |
+|---|---|
+| Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉 |
+| Teacher | `/teach` — sample Maryvale cohort (24 students) · `/teach/new` to create a class in under 10 minutes |
+| Reviewer | `/curriculum` — read-only catalog, no student data |
+
+Status: UI complete on demo data stored in the browser. Backend (Supabase auth + database) is next; all data access goes through `web/src/lib/repo.ts` so it swaps in one place. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
 
 ## Tech stack
 
-- Frontend:
-- Backend:
-- Database:
-- APIs / services:
+- Frontend: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, lucide icons
+- Code editor / runner: CodeMirror 6 + Pyodide (Python in a Web Worker, no server)
+- Backend / database: planned — Supabase (Postgres + row-level security); demo data in browser storage for now
+- APIs / services: none yet — no API keys required to run
 
 ## Run it locally
 
+Requires Node.js 20+.
+
 ```bash
-git clone https://github.com/2026-Arizona-Opportunity-Hack/Hungry Hackers-CodinginColor.git
-cd Hungry Hackers-CodinginColor
-cp .env.example .env   # fill in your own values — never commit .env
-# install + start commands here
+git clone https://github.com/2026-Arizona-Opportunity-Hack/Hungry-Hackers-CodinginColor.git
+cd Hungry-Hackers-CodinginColor/web
+npm install
+npm run dev        # http://localhost:3000
 ```
+
+No `.env` is needed yet. `npm run build` type-checks and builds; `npm run lint` runs ESLint.
+
+**Accessibility:** every flow works keyboard-only (skip link, visible focus, in the code editor press Esc then Tab to leave), status is always icon + text, and brand green is only used for text where it passes WCAG AA.
 
 ## Links
 
 - Live demo:
 - Demo video:
-- Design / docs:
+- Design / docs: [design decisions](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md) · [game plan](docs/HACKATHON_IDEAS.md)
 
 ## After the hackathon
 
