@@ -1,0 +1,394 @@
+"use client";
+
+import { useEffect, useId, useState } from "react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Lightbulb, XCircle } from "lucide-react";
+import { Button, cx } from "./ui";
+import type { Activity, ChoiceQuestion } from "@/lib/types";
+
+export interface Completion {
+  score?: number;
+  attempts: number;
+  response?: unknown;
+}
+
+export interface ActivityProps<K extends Activity["kind"]> {
+  activity: Extract<Activity, { kind: K }>;
+  onComplete: (c: Completion) => void;
+  onFailedCheck?: () => void;
+}
+
+// ---------- Slides ----------
+
+export function SlidesActivity({ activity, onComplete }: ActivityProps<"slides">) {
+  const [i, setI] = useState(0);
+  const slide = activity.slides[i];
+  const last = i === activity.slides.length - 1;
+  return (
+    <div>
+      <div
+        aria-roledescription="slide"
+        aria-label={`Slide ${i + 1} of ${activity.slides.length}`}
+        className={cx(
+          "flex min-h-72 flex-col justify-center rounded-[var(--radius-card)] border-2 border-cic-line p-6 md:min-h-80 md:p-10",
+          slide.divider && "items-center text-center",
+        )}
+      >
+        <h2 className={cx("font-bold", slide.divider ? "text-3xl md:text-4xl" : "text-2xl text-cic-dark")}>{slide.title}</h2>
+        {slide.bullets.length > 0 && (
+          <ul className={cx("mt-4 space-y-2 text-lg", !slide.divider && "list-disc pl-6")}>
+            {slide.bullets.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        )}
+        {slide.ourProject && (
+          <div className="mt-5 rounded-xl border-l-4 border-cic-dark bg-cic-tint p-4">
+            <p className="font-mono text-sm font-bold text-cic-darker">Our project:</p>
+            <p className="mt-1">{slide.ourProject}</p>
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <Button variant="secondary" onClick={() => setI((x) => x - 1)} disabled={i === 0}>
+          <ArrowLeft aria-hidden className="size-5" /> Back
+        </Button>
+        <p aria-live="polite" className="text-sm font-bold text-cic-muted">
+          {i + 1} / {activity.slides.length}
+        </p>
+        {last ? (
+          <Button onClick={() => onComplete({ attempts: 1 })}>
+            I&apos;m done reading <CheckCircle2 aria-hidden className="size-5" />
+          </Button>
+        ) : (
+          <Button onClick={() => setI((x) => x + 1)}>
+            Next <ArrowRight aria-hidden className="size-5" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Shared question UI ----------
+
+function QuestionCard({
+  q,
+  index,
+  value,
+  onChange,
+  disabled,
+  reveal,
+}: {
+  q: ChoiceQuestion;
+  index: number;
+  value: number | undefined;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+  reveal?: boolean;
+}) {
+  const name = useId();
+  return (
+    <fieldset className="rounded-[var(--radius-card)] border-2 border-cic-line p-5">
+      <legend className="px-1 text-lg font-bold">
+        {index + 1}. {q.prompt}
+      </legend>
+      {q.code && <pre className="mt-2 overflow-x-auto rounded-xl bg-cic-tint p-4 font-mono">{q.code}</pre>}
+      <div className="mt-3 space-y-2">
+        {q.choices.map((c, ci) => {
+          const checked = value === ci;
+          const correct = reveal && ci === q.answerIndex;
+          const wrong = reveal && checked && ci !== q.answerIndex;
+          return (
+            <label
+              key={c}
+              className={cx(
+                "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-2",
+                correct ? "border-cic-dark bg-cic-tint" : wrong ? "border-cic-danger bg-cic-danger-bg" : checked ? "border-cic-dark" : "border-cic-line",
+                disabled && "cursor-default",
+              )}
+            >
+              <input
+                type="radio"
+                name={name}
+                checked={checked}
+                disabled={disabled}
+                onChange={() => onChange(ci)}
+                className="size-5 accent-[#007a3d]"
+              />
+              <span className="flex-1">{c}</span>
+              {correct && (
+                <span className="inline-flex items-center gap-1 text-sm font-bold text-cic-darker">
+                  <CheckCircle2 aria-hidden className="size-4" /> Correct answer
+                </span>
+              )}
+              {wrong && (
+                <span className="inline-flex items-center gap-1 text-sm font-bold text-cic-danger">
+                  <XCircle aria-hidden className="size-4" /> Your answer
+                </span>
+              )}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+// ---------- Pretest / post-test ----------
+
+export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" | "posttest">) {
+  const [answers, setAnswers] = useState<(number | undefined)[]>(() => activity.questions.map(() => undefined));
+  const [submitted, setSubmitted] = useState(false);
+  const isPre = activity.kind === "pretest";
+  const all = answers.every((a) => a !== undefined);
+  const score = answers.filter((a, i) => a === activity.questions[i].answerIndex).length / activity.questions.length;
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!all) return;
+        if (isPre) onComplete({ attempts: 1, score, response: answers });
+        else setSubmitted(true);
+      }}
+      className="space-y-4"
+    >
+      <p className="rounded-xl bg-cic-tint p-4">
+        {isPre
+          ? "This warm-up shows what you already know. It's okay to guess — it doesn't count against you."
+          : "Same questions as the warm-up. Let's see how much you've learned!"}
+      </p>
+      {activity.questions.map((q, i) => (
+        <QuestionCard
+          key={q.id}
+          q={q}
+          index={i}
+          value={answers[i]}
+          disabled={submitted}
+          reveal={submitted}
+          onChange={(v) => setAnswers((a) => a.map((x, j) => (j === i ? v : x)))}
+        />
+      ))}
+      {submitted ? (
+        <div role="status" className="rounded-[var(--radius-card)] border-2 border-cic-dark bg-cic-tint p-5">
+          <p className="text-xl font-bold">
+            You got {Math.round(score * activity.questions.length)} of {activity.questions.length} right.
+          </p>
+          <Button type="button" className="mt-3" onClick={() => onComplete({ attempts: 1, score, response: answers })}>
+            Finish module <ArrowRight aria-hidden className="size-5" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-end gap-3">
+          {!all && <p className="text-sm text-cic-muted">Answer every question to continue.</p>}
+          <Button type="submit" disabled={!all}>
+            {isPre ? "Submit warm-up" : "Submit answers"} <ArrowRight aria-hidden className="size-5" />
+          </Button>
+        </div>
+      )}
+    </form>
+  );
+}
+
+// ---------- Check for understanding ----------
+
+export function CheckActivity({ activity, onComplete, onFailedCheck }: ActivityProps<"check">) {
+  const q = activity.questions[0];
+  const [value, setValue] = useState<number | undefined>();
+  const [attempts, setAttempts] = useState(0);
+  const [state, setState] = useState<"idle" | "wrong" | "right">("idle");
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value === undefined) return;
+        const n = attempts + 1;
+        setAttempts(n);
+        if (value === q.answerIndex) setState("right");
+        else {
+          setState("wrong");
+          onFailedCheck?.();
+        }
+      }}
+      className="space-y-4"
+    >
+      <QuestionCard
+        q={q}
+        index={0}
+        value={value}
+        disabled={state === "right"}
+        reveal={state === "right"}
+        onChange={(v) => {
+          setValue(v);
+          if (state === "wrong") setState("idle");
+        }}
+      />
+      <div aria-live="polite">
+        {state === "wrong" && (
+          <div className="flex gap-3 rounded-xl bg-cic-warn-bg p-4 text-cic-warn">
+            <Lightbulb aria-hidden className="size-5 shrink-0" />
+            <p>
+              <strong>Not quite — here&apos;s a hint:</strong> {q.hint}
+            </p>
+          </div>
+        )}
+        {state === "right" && (
+          <div className="flex gap-3 rounded-xl bg-cic-tint p-4 text-cic-darker">
+            <CheckCircle2 aria-hidden className="size-5 shrink-0" />
+            <p>
+              <strong>Nice!</strong> {q.explanation}
+            </p>
+          </div>
+        )}
+      </div>
+      <div className="flex justify-end">
+        {state === "right" ? (
+          <Button type="button" onClick={() => onComplete({ attempts, score: 1, response: value })}>
+            Continue <ArrowRight aria-hidden className="size-5" />
+          </Button>
+        ) : (
+          <Button type="submit" disabled={value === undefined}>
+            Check answer
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+// ---------- Worksheet ----------
+
+export function WorksheetActivity({ activity, onComplete }: ActivityProps<"worksheet">) {
+  const draftKey = `cic.draft.${activity.id}`;
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (raw) setValues(JSON.parse(raw));
+    } catch {
+      /* storage blocked */
+    }
+  }, [draftKey]);
+
+  function update(id: string, v: string) {
+    const next = { ...values, [id]: v };
+    setValues(next);
+    try {
+      window.localStorage.setItem(draftKey, JSON.stringify(next));
+      setSaved(true);
+    } catch {
+      setSaved(false);
+    }
+  }
+
+  const complete = activity.fields.every((f) => (values[f.id] ?? "").trim().length > 0);
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!complete) return;
+        try {
+          window.localStorage.removeItem(draftKey);
+        } catch {
+          /* ignore */
+        }
+        onComplete({ attempts: 1, response: values });
+      }}
+      className="space-y-5"
+    >
+      <p className="text-lg">{activity.intro}</p>
+      {activity.link && (
+        <a
+          href={activity.link.href}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border-2 border-cic-dark px-4 font-bold text-cic-dark hover:bg-cic-tint"
+        >
+          {activity.link.label} <ExternalLink aria-hidden className="size-4" />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+      )}
+      {activity.fields.map((f, i) => {
+        const id = `${activity.id}-${f.id}`;
+        return (
+          <div key={f.id}>
+            <label htmlFor={id} className="block font-bold">
+              {i + 1}. {f.label}
+            </label>
+            {f.help && (
+              <p id={`${id}-help`} className="text-sm text-cic-muted">
+                {f.help}
+              </p>
+            )}
+            {f.kind === "long" ? (
+              <textarea
+                id={id}
+                rows={3}
+                value={values[f.id] ?? ""}
+                onChange={(e) => update(f.id, e.target.value)}
+                aria-describedby={f.help ? `${id}-help` : undefined}
+                className="mt-2 w-full rounded-xl border-2 border-cic-line p-3 focus:border-cic-dark"
+              />
+            ) : (
+              <input
+                id={id}
+                type={f.kind === "number" ? "number" : "text"}
+                inputMode={f.kind === "number" ? "numeric" : undefined}
+                value={values[f.id] ?? ""}
+                onChange={(e) => update(f.id, e.target.value)}
+                aria-describedby={f.help ? `${id}-help` : undefined}
+                className="mt-2 w-full rounded-xl border-2 border-cic-line p-3 focus:border-cic-dark"
+              />
+            )}
+          </div>
+        );
+      })}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p role="status" className="text-sm text-cic-muted">
+          {saved ? "Draft saved on this device." : "Your answers save as you type."}
+        </p>
+        <Button type="submit" disabled={!complete}>
+          Submit worksheet <ArrowRight aria-hidden className="size-5" />
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ---------- Exit question ----------
+
+export function ExitActivity({ activity, onComplete }: ActivityProps<"exit">) {
+  const [text, setText] = useState("");
+  const id = useId();
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (text.trim().length < 3) return;
+        onComplete({ attempts: 1, response: text.trim() });
+      }}
+      className="space-y-4"
+    >
+      <label htmlFor={id} className="block text-xl font-bold">
+        {activity.prompt}
+      </label>
+      <textarea
+        id={id}
+        rows={4}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className="w-full rounded-xl border-2 border-cic-line p-3 text-lg focus:border-cic-dark"
+        placeholder="Write a sentence or two…"
+      />
+      <div className="flex justify-end">
+        <Button type="submit" disabled={text.trim().length < 3}>
+          Submit <ArrowRight aria-hidden className="size-5" />
+        </Button>
+      </div>
+    </form>
+  );
+}
