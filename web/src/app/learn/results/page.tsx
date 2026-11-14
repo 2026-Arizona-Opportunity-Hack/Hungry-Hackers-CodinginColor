@@ -34,12 +34,12 @@ export default function MyProgress() {
                 <div key={b.label} className="flex flex-col items-center">
                   <span className="mb-1 font-bold">{pct(b.v)}</span>
                   <div className="flex h-36 w-16 items-end rounded-lg bg-white">
-                    <div className={`w-full rounded-lg ${b.cls}`} style={{ height: `${Math.max(4, b.v * 100)}%` }} />
+                    <div className={`w-full origin-bottom animate-grow-up rounded-lg ${b.cls}`} style={{ height: `${Math.max(4, b.v * 100)}%` }} />
                   </div>
                   <span className="mt-1 text-sm text-cic-muted">{b.label}</span>
                 </div>
               ))}
-              <p className="mb-8 text-3xl font-bold text-cic-dark">{signedPct(overall.gain)}</p>
+              <p className="mb-8 animate-pop text-3xl font-bold text-cic-dark [animation-delay:400ms]">{signedPct(overall.gain)}</p>
             </div>
             <p className="sr-only">
               Warm-up average {pct(overall.pre)}, wrap-up average {pct(overall.post)}, learning gain {signedPct(overall.gain)}.

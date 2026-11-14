@@ -18,7 +18,7 @@ export function Logo({ variant = "horizontal", className }: { variant?: "horizon
 }
 
 const buttonBase =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold transition-[color,background-color,transform] duration-150 active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-60";
 const buttonVariants = {
   primary: "bg-cic-dark text-white hover:bg-cic-darker",
   secondary: "border-2 border-cic-dark bg-white text-cic-dark hover:bg-cic-tint",
@@ -70,7 +70,7 @@ export function ProgressBar({ value, label, className }: { value: number; label:
       aria-valuenow={Math.round(v * 100)}
       className={cx("h-2.5 w-full overflow-hidden rounded-full bg-cic-tint ring-1 ring-cic-line ring-inset", className)}
     >
-      <div className="h-full rounded-full bg-cic-green" style={{ width: `${v * 100}%` }} />
+      <div className="h-full origin-left animate-grow rounded-full bg-cic-green transition-[width] duration-500 ease-out" style={{ width: `${v * 100}%` }} />
     </div>
   );
 }
@@ -122,7 +122,7 @@ export function Minutes({ n }: { n: number }) {
 
 export function KpiCard({ label, value, note, Icon }: { label: string; value: string; note?: string; Icon: typeof Clock }) {
   return (
-    <Card className="flex items-start gap-3 p-4">
+    <Card className="flex h-full items-start gap-3 p-4">
       <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-cic-tint text-cic-dark">
         <Icon aria-hidden className="size-5" />
       </span>

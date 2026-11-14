@@ -87,7 +87,7 @@ export default function JoinPage() {
           </ol>
 
           {step === "code" && (
-            <form onSubmit={submitCode} className="mt-6" noValidate>
+            <form onSubmit={submitCode} className="mt-6 animate-rise" noValidate>
               <h1 ref={headingRef} tabIndex={-1} className="text-center text-2xl font-bold text-cic-dark">
                 Join a classroom
               </h1>
@@ -124,7 +124,7 @@ export default function JoinPage() {
           )}
 
           {step === "name" && cls && (
-            <div className="mt-6">
+            <div className="mt-6 animate-rise">
               <h1 ref={headingRef} tabIndex={-1} className="text-center text-2xl font-bold text-cic-dark">
                 Which one is you?
               </h1>
@@ -152,19 +152,19 @@ export default function JoinPage() {
           )}
 
           {step === "picture" && student && (
-            <div className="mt-6">
+            <div className="mt-6 animate-rise">
               <h1 ref={headingRef} tabIndex={-1} className="text-center text-2xl font-bold text-cic-dark">
                 Hi, {student.firstName}! Tap your 3 pictures
               </h1>
               <p className="mt-1 text-center text-cic-muted">In order. This keeps your work yours.</p>
 
-              <div aria-live="polite" className="mt-5 flex justify-center gap-3">
+              <div key={tries} aria-live="polite" className={cx("mt-5 flex justify-center gap-3", tries > 0 && "animate-shake")}>
                 {[0, 1, 2].map((i) => (
                   <span
-                    key={i}
+                    key={`${i}-${picked[i] ?? ""}`}
                     className={cx(
                       "grid size-16 place-items-center rounded-xl border-2 text-3xl",
-                      picked[i] ? "border-cic-dark bg-cic-tint" : "border-dashed border-cic-line",
+                      picked[i] ? "animate-pop border-cic-dark bg-cic-tint" : "border-dashed border-cic-line",
                     )}
                   >
                     {picked[i] ? (
@@ -193,7 +193,7 @@ export default function JoinPage() {
                     type="button"
                     onClick={() => tap(p.emoji)}
                     aria-label={p.name}
-                    className="grid aspect-square place-items-center rounded-xl border-2 border-cic-line text-4xl hover:border-cic-dark hover:bg-cic-tint"
+                    className="grid aspect-square place-items-center rounded-xl border-2 border-cic-line text-4xl transition-transform duration-150 hover:-translate-y-0.5 hover:border-cic-dark hover:bg-cic-tint active:scale-90"
                   >
                     <span aria-hidden>{p.emoji}</span>
                   </button>

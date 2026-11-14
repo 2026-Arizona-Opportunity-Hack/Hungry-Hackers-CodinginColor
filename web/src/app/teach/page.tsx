@@ -70,7 +70,7 @@ export default function TeacherOverview() {
         </Button>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard Icon={Users} label="Students" value={String(cls.roster.length)} note={`${rows.length - notStarted.length} have started`} />
         <KpiCard Icon={GraduationCap} label="Average completion" value={pct(avgCompletion)} note={`${modules.length} modules assigned`} />
         <KpiCard
@@ -82,7 +82,7 @@ export default function TeacherOverview() {
         <KpiCard Icon={AlertTriangle} label="Need help now" value={String(stuck.length)} note={`${notStarted.length} not started`} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="stagger mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <AlertTriangle aria-hidden className="size-5 text-cic-danger" /> Who needs help
@@ -143,7 +143,7 @@ export default function TeacherOverview() {
                     </span>
                   </div>
                   <div className="mt-1 h-3 overflow-hidden rounded-full bg-cic-tint ring-1 ring-cic-line ring-inset" aria-hidden>
-                    <div className="h-full bg-cic-green" style={{ width: `${(n / rows.length) * 100}%` }} />
+                    <div className="h-full origin-left animate-grow bg-cic-green" style={{ width: `${(n / rows.length) * 100}%` }} />
                   </div>
                 </li>
               );
@@ -172,7 +172,7 @@ export default function TeacherOverview() {
                   <td className="py-2">
                     <span className="flex items-center gap-2">
                       <span className="h-2.5 w-24 overflow-hidden rounded-full bg-cic-tint ring-1 ring-cic-line ring-inset" aria-hidden>
-                        <span className="block h-full bg-cic-dark" style={{ width: `${c.mastery * 100}%` }} />
+                        <span className="block h-full origin-left animate-grow bg-cic-dark" style={{ width: `${c.mastery * 100}%` }} />
                       </span>
                       {pct(c.mastery)}
                       {c.mastery < 0.6 && <span className="font-bold text-cic-danger">· Reteach</span>}

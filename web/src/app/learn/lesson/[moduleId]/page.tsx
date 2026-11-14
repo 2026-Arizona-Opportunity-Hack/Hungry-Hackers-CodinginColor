@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, ChevronLeft, Lock, PartyPopper, TrendingUp } from "lucide-react";
 import { CheckActivity, ExitActivity, QuizActivity, SlidesActivity, WorksheetActivity, type Completion } from "@/components/activities";
 import { CodeActivity } from "@/components/code-activity";
+import { Confetti } from "@/components/confetti";
 import { Card, LinkButton, Loading, Minutes, cx } from "@/components/ui";
 import { isDone, moduleGain, moduleUnlocked, pct, signedPct } from "@/lib/analytics";
 import { recordFailedCheck, recordResult } from "@/lib/repo";
@@ -92,7 +93,7 @@ export default function LessonPlayer() {
           const now = i === index;
           return (
             <li key={a.id} aria-current={now ? "step" : undefined} className="min-w-24 flex-1">
-              <div className={cx("h-2 rounded-full", done ? "bg-cic-green" : now ? "bg-cic-dark" : "bg-cic-tint ring-1 ring-cic-line ring-inset")} />
+              <div className={cx("h-2 rounded-full transition-colors duration-500", done ? "bg-cic-green" : now ? "bg-cic-dark" : "bg-cic-tint ring-1 ring-cic-line ring-inset")} />
               <p className={cx("mt-1 flex items-center gap-1 text-xs font-bold", now ? "text-cic-dark" : "text-cic-muted")}>
                 {done && <Check aria-hidden className="size-3.5" />}
                 {STAGE_LABELS[a.kind]}
@@ -104,7 +105,7 @@ export default function LessonPlayer() {
       </ol>
 
       {current ? (
-        <div className="mt-6">
+        <div key={current.id} className="mt-6 animate-rise">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
             <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-cic-dark md:text-3xl">
               {current.title}
@@ -119,16 +120,17 @@ export default function LessonPlayer() {
           {current.kind === "exit" && <ExitActivity key={current.id} activity={current} onComplete={complete} />}
         </div>
       ) : (
-        <Card className="mt-6 border-2 border-cic-dark">
+        <Card className="relative mt-6 animate-rise border-2 border-cic-dark">
+          {justFinished && <Confetti />}
           <div role="status">
-            <PartyPopper aria-hidden className="size-10 text-cic-dark" />
+            <PartyPopper aria-hidden className="size-10 animate-pop text-cic-dark" />
             <h1 className="mt-2 text-2xl font-bold text-cic-dark">
               {justFinished ? `Module ${mod.number} complete!` : `You've finished Module ${mod.number}`}
             </h1>
             <p className="mt-1">+{mod.activities.length * 10} XP earned in this module.</p>
           </div>
           {gain.gain !== null && (
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="stagger mt-5 grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl bg-cic-tint p-4">
                 <p className="text-sm text-cic-muted">Warm-up</p>
                 <p className="text-2xl font-bold">{pct(gain.pre)}</p>
