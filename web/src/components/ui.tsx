@@ -18,11 +18,15 @@ export function Logo({ variant = "horizontal", className }: { variant?: "horizon
 }
 
 const buttonBase =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold transition-[color,background-color,transform] duration-150 active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-6 py-2.5 font-bold transition-[color,background-color,transform,box-shadow] duration-100 active:translate-y-[3px] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0";
 const buttonVariants = {
-  primary: "bg-cic-dark text-white hover:bg-cic-darker",
-  secondary: "border-2 border-cic-dark bg-white text-cic-dark hover:bg-cic-tint",
-  ghost: "text-cic-dark hover:bg-cic-tint",
+  primary:
+    "bg-cic-dark text-white shadow-slab hover:bg-[#008544] active:shadow-slab-pressed disabled:active:shadow-slab",
+  secondary:
+    "border-2 border-cic-line bg-white text-cic-dark shadow-slab-gray hover:bg-cic-tint active:shadow-slab-gray-pressed disabled:active:shadow-slab-gray",
+  /** For use on dark-green panels. */
+  light: "bg-white text-cic-darker shadow-slab hover:bg-cic-tint active:shadow-slab-pressed",
+  ghost: "text-cic-dark hover:bg-cic-tint active:translate-y-0",
 };
 
 type Variant = keyof typeof buttonVariants;
@@ -41,7 +45,7 @@ export function LinkButton({
 
 export function Card({ className, children, ...rest }: ComponentProps<"section">) {
   return (
-    <section className={cx("rounded-[var(--radius-card)] border border-cic-line bg-white p-5", className)} {...rest}>
+    <section className={cx("rounded-[var(--radius-card)] border-2 border-cic-line bg-white p-5 shadow-slab-gray", className)} {...rest}>
       {children}
     </section>
   );
@@ -51,7 +55,7 @@ export function PageTitle({ title, subtitle, actions }: { title: string; subtitl
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-cic-dark md:text-3xl">{title}</h1>
+        <h1 className="font-display text-3xl leading-tight text-cic-dark md:text-4xl">{title}</h1>
         {subtitle && <p className="mt-1 text-cic-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -68,7 +72,7 @@ export function ProgressBar({ value, label, className }: { value: number; label:
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(v * 100)}
-      className={cx("h-2.5 w-full overflow-hidden rounded-full bg-cic-tint ring-1 ring-cic-line ring-inset", className)}
+      className={cx("h-3 w-full overflow-hidden rounded-full bg-cic-tint ring-1 ring-cic-line ring-inset", className)}
     >
       <div className="h-full origin-left animate-grow rounded-full bg-cic-green transition-[width] duration-500 ease-out" style={{ width: `${v * 100}%` }} />
     </div>
@@ -123,14 +127,37 @@ export function Minutes({ n }: { n: number }) {
 export function KpiCard({ label, value, note, Icon }: { label: string; value: string; note?: string; Icon: typeof Clock }) {
   return (
     <Card className="flex h-full items-start gap-3 p-4">
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-cic-tint text-cic-dark">
-        <Icon aria-hidden className="size-5" />
+      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-cic-dark text-white shadow-slab">
+        <Icon aria-hidden className="size-6" />
       </span>
       <div>
-        <p className="text-sm text-cic-muted">{label}</p>
-        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-sm font-bold text-cic-muted">{label}</p>
+        <p className="font-display text-3xl">{value}</p>
         {note && <p className="text-sm text-cic-muted">{note}</p>}
       </div>
     </Card>
+  );
+}
+
+/**
+ * Decorative chevron brackets — the "< >" code-tag motif from the CIC mark,
+ * drawn as outlines so it never competes with the real logo.
+ */
+export function Brackets({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 240 160" className={className} aria-hidden focusable="false">
+      <path d="M78 22 20 80l58 58" fill="none" stroke="currentColor" strokeWidth="22" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="m162 22 58 58-58 58" fill="none" stroke="currentColor" strokeWidth="22" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** A dark-green hero panel with white text and the bracket motif. */
+export function HeroPanel({ className, children }: { className?: string; children: ReactNode }) {
+  return (
+    <section className={cx("relative overflow-hidden rounded-[24px] bg-cic-dark p-6 text-white shadow-slab md:p-8", className)}>
+      <Brackets className="pointer-events-none absolute -right-10 -bottom-8 w-72 text-cic-green opacity-40 md:w-96" />
+      <div className="relative">{children}</div>
+    </section>
   );
 }

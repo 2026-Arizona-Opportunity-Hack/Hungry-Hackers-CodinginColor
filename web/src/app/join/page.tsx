@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Delete, Info, ShieldCheck } from "lucide-react";
-import { Button, Logo, cx } from "@/components/ui";
+import { Brackets, Button, Logo, cx } from "@/components/ui";
 import { PICTURES, pictureName, sameCode } from "@/lib/picture-codes";
 import { findClassByCode, setSession } from "@/lib/repo";
 import { DEMO_CLASS_CODE, DEMO_STUDENT } from "@/lib/demo-data";
@@ -63,9 +63,11 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-cic-tint">
-      <main id="main" tabIndex={-1} className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-10">
-        <div className="rounded-[var(--radius-card)] bg-white p-6 shadow-sm md:p-8">
+    <div className="relative min-h-dvh overflow-hidden bg-cic-dark">
+      <Brackets className="pointer-events-none absolute -top-16 -left-24 w-[28rem] text-cic-green opacity-30" />
+      <Brackets className="pointer-events-none absolute -right-24 -bottom-16 w-[32rem] text-cic-darker" />
+      <main id="main" tabIndex={-1} className="relative mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-10">
+        <div className="rounded-[28px] bg-white p-6 shadow-[0_8px_0_var(--color-cic-darker)] md:p-8">
           <Logo variant="stacked" className="mx-auto h-auto w-28" />
 
           <ol aria-label="Steps" className="mt-6 flex justify-center gap-2 text-sm">
@@ -76,8 +78,8 @@ export default function JoinPage() {
                   key={s}
                   aria-current={s === step ? "step" : undefined}
                   className={cx(
-                    "rounded-full px-3 py-1 font-bold",
-                    i < idx ? "bg-cic-tint text-cic-darker" : s === step ? "bg-cic-dark text-white" : "text-cic-muted",
+                    "rounded-full px-3 py-1.5 font-bold",
+                    i < idx ? "bg-cic-tint text-cic-darker" : s === step ? "bg-cic-dark text-white shadow-slab" : "bg-white text-cic-muted ring-2 ring-cic-line ring-inset",
                   )}
                 >
                   {i + 1}. {s === "code" ? "Class code" : s === "name" ? "Your name" : "Picture code"}
@@ -88,7 +90,7 @@ export default function JoinPage() {
 
           {step === "code" && (
             <form onSubmit={submitCode} className="mt-6 animate-rise" noValidate>
-              <h1 ref={headingRef} tabIndex={-1} className="text-center text-2xl font-bold text-cic-dark">
+              <h1 ref={headingRef} tabIndex={-1} className="text-center font-display text-3xl text-cic-dark">
                 Join a classroom
               </h1>
               <p className="mt-1 text-center text-cic-muted">Jump in with your class code — no account needed.</p>
@@ -107,7 +109,7 @@ export default function JoinPage() {
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "code-error" : "code-help"}
                 placeholder="e.g. ABC123"
-                className="mt-2 w-full rounded-xl border-2 border-cic-line px-4 py-3 font-mono text-2xl tracking-widest uppercase placeholder:text-cic-muted focus:border-cic-dark"
+                className="mt-2 w-full rounded-2xl border-2 border-cic-line bg-cic-tint px-4 py-4 text-center font-display text-3xl tracking-[0.3em] uppercase shadow-[inset_0_3px_0_rgba(0,0,0,0.06)] placeholder:text-cic-muted placeholder:tracking-normal focus:border-cic-dark focus:bg-white"
               />
               <p id="code-help" className="mt-2 text-sm text-cic-muted">
                 Your teacher will write it on the board.
@@ -125,7 +127,7 @@ export default function JoinPage() {
 
           {step === "name" && cls && (
             <div className="mt-6 animate-rise">
-              <h1 ref={headingRef} tabIndex={-1} className="text-center text-2xl font-bold text-cic-dark">
+              <h1 ref={headingRef} tabIndex={-1} className="text-center font-display text-3xl text-cic-dark">
                 Which one is you?
               </h1>
               <p className="mt-1 text-center text-cic-muted">
@@ -137,7 +139,7 @@ export default function JoinPage() {
                     <button
                       type="button"
                       onClick={() => chooseName(s)}
-                      className="min-h-12 w-full rounded-xl border-2 border-cic-line px-3 py-2 font-bold hover:border-cic-dark hover:bg-cic-tint"
+                      className="min-h-14 w-full rounded-2xl border-2 border-cic-line bg-white px-3 py-2 text-lg font-bold shadow-slab-gray transition-[transform,box-shadow] duration-100 hover:border-cic-dark hover:bg-cic-tint active:translate-y-[3px] active:shadow-slab-gray-pressed"
                     >
                       {s.firstName} {s.lastInitial && `${s.lastInitial}.`}
                     </button>
@@ -153,7 +155,7 @@ export default function JoinPage() {
 
           {step === "picture" && student && (
             <div className="mt-6 animate-rise">
-              <h1 ref={headingRef} tabIndex={-1} className="text-center text-2xl font-bold text-cic-dark">
+              <h1 ref={headingRef} tabIndex={-1} className="text-center font-display text-3xl text-cic-dark">
                 Hi, {student.firstName}! Tap your 3 pictures
               </h1>
               <p className="mt-1 text-center text-cic-muted">In order. This keeps your work yours.</p>
@@ -193,7 +195,7 @@ export default function JoinPage() {
                     type="button"
                     onClick={() => tap(p.emoji)}
                     aria-label={p.name}
-                    className="grid aspect-square place-items-center rounded-xl border-2 border-cic-line text-4xl transition-transform duration-150 hover:-translate-y-0.5 hover:border-cic-dark hover:bg-cic-tint active:scale-90"
+                    className="grid aspect-square place-items-center rounded-2xl border-2 border-cic-line bg-white text-5xl shadow-slab-gray transition-[transform,box-shadow] duration-100 hover:border-cic-dark hover:bg-cic-tint active:translate-y-[3px] active:shadow-slab-gray-pressed"
                   >
                     <span aria-hidden>{p.emoji}</span>
                   </button>

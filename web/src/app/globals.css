@@ -20,7 +20,16 @@
   --color-cic-danger: #a4161a;
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: "Courier New", Courier, ui-monospace, monospace;
-  --radius-card: 14px;
+  /* Arial Black is the heavy cut of Arial (brand typeface) — used only for display headings. */
+  --font-display: "Arial Black", "Arial Bold", Arial, Helvetica, sans-serif;
+  --radius-card: 16px;
+
+  /* The "slab": a solid edge under buttons and cards, echoing the extruded
+     brackets in the CIC mark. Pressed buttons sink into it. */
+  --shadow-slab: 0 4px 0 var(--color-cic-darker);
+  --shadow-slab-pressed: 0 1px 0 var(--color-cic-darker);
+  --shadow-slab-gray: 0 4px 0 var(--color-cic-line);
+  --shadow-slab-gray-pressed: 0 1px 0 var(--color-cic-line);
 
   /* Motion: short, purposeful, and fully disabled under prefers-reduced-motion. */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -121,6 +130,11 @@ body {
   border-radius: 8px;
   font-weight: 700;
 }
+/* Headings that receive focus programmatically (for screen readers) aren't controls; no ring. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
 .skip-link:focus {
   top: 8px;
 }
