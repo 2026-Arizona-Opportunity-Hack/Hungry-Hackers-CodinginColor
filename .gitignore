@@ -27,3 +27,14 @@ target/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local tooling output
+graphify-out/
+web/tsconfig.tsbuildinfo
+
+# Nonprofit source materials (shared with the team privately; not for the public repo)
+*.docx
+*.pptx
+Hackathon.pdf
+Intro to CV _ Teachable Machine*.pdf
+CIC_Logo (*).png
