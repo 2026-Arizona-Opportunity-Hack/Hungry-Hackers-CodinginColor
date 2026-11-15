@@ -5,21 +5,61 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Delete, Info, ShieldCheck } from "lucide-react";
 import { Brackets, Button, Logo, cx } from "@/components/ui";
 import { PICTURES, pictureName, sameCode } from "@/lib/picture-codes";
-import { findClassByCode, setSession } from "@/lib/repo";
+import { findClassByCode, setJoinedClass, setSession } from "@/lib/repo";
 import { DEMO_CLASS_CODE, DEMO_STUDENT } from "@/lib/demo-data";
-import type { Classroom, RosterStudent } from "@/lib/types";
+import type { Classroom, PictureCode } from "@/lib/types";
 
 type Step = "code" | "name" | "picture";
+
+/** A roster name. `pictureCode` is only present for local (offline demo) classes. */
+interface JoinStudent {
+  id: string;
+  firstName: string;
+  lastInitial: string;
+  pictureCode?: PictureCode;
+}
+
+/** "server": found in Supabase, pictures are checked by /api/join/student. "local": demo data in this browser. */
+interface JoinClass {
+  id: string;
+  name: string;
+  school: string;
+  roster: JoinStudent[];
+  source: "server" | "local";
+}
+
+const NOT_FOUND = "We couldn't find that class code. Check it with your teacher — it's 6 letters and numbers.";
+const WRONG_PICTURES = "Those pictures don't match. Try again, or ask your teacher for your picture code.";
+const LOCKED = "Too many tries. Wait 15 minutes, or ask your teacher for your picture code.";
+const TROUBLE = "Something went wrong on our end. Please try again in a moment.";
+
+/** Asks the server first; falls back to local demo data if Supabase isn't reachable or set up. */
+async function lookUpClass(code: string): Promise<JoinClass | "not_found" | "error"> {
+  try {
+    const res = await fetch("/api/join/class", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (res.ok) return { ...(await res.json()), source: "server" };
+    if (res.status !== 404 && res.status !== 503) return "error";
+  } catch {
+    /* offline — try local data */
+  }
+  const local = findClassByCode(code);
+  return local ? { id: local.id, name: local.name, school: local.school, roster: local.roster, source: "local" } : "not_found";
+}
 
 export default function JoinPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("code");
   const [code, setCode] = useState("");
-  const [cls, setCls] = useState<Classroom | null>(null);
-  const [student, setStudent] = useState<RosterStudent | null>(null);
+  const [cls, setCls] = useState<JoinClass | null>(null);
+  const [student, setStudent] = useState<JoinStudent | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
+  const [busy, setBusy] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // Move focus to the new step's heading so screen readers announce it.
@@ -27,11 +67,14 @@ export default function JoinPage() {
     headingRef.current?.focus();
   }, [step]);
 
-  function submitCode(e: React.FormEvent) {
+  async function submitCode(e: React.FormEvent) {
     e.preventDefault();
-    const found = findClassByCode(code);
-    if (!found) {
-      setError("We couldn't find that class code. Check it with your teacher — it's 6 letters and numbers.");
+    if (busy) return;
+    setBusy(true);
+    const found = await lookUpClass(code);
+    setBusy(false);
+    if (found === "not_found" || found === "error") {
+      setError(found === "error" ? TROUBLE : NOT_FOUND);
       return;
     }
     setError(null);
@@ -39,26 +82,52 @@ export default function JoinPage() {
     setStep("name");
   }
 
-  function chooseName(s: RosterStudent) {
+  function chooseName(s: JoinStudent) {
     setStudent(s);
     setPicked([]);
     setError(null);
     setStep("picture");
   }
 
-  function tap(emoji: string) {
-    if (picked.length >= 3) return;
+  function wrong(message: string) {
+    setTries((t) => t + 1);
+    setError(message);
+    setPicked([]);
+  }
+
+  async function tap(emoji: string) {
+    if (picked.length >= 3 || busy) return;
     const next = [...picked, emoji];
     setPicked(next);
-    if (next.length === 3 && student && cls) {
-      if (sameCode(next, student.pictureCode)) {
+    if (next.length < 3 || !student || !cls) return;
+
+    if (cls.source === "local") {
+      if (student.pictureCode && sameCode(next, student.pictureCode)) {
         setSession({ classId: cls.id, studentId: student.id });
         router.push("/learn");
-      } else {
-        setTries((t) => t + 1);
-        setError("Those pictures don't match. Try again, or ask your teacher for your picture code.");
-        setPicked([]);
+      } else wrong(WRONG_PICTURES);
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/join/student", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ classId: cls.id, studentId: student.id, pictureCode: next }),
+      });
+      if (res.ok) {
+        const joined = (await res.json()) as Classroom;
+        setJoinedClass(joined);
+        setSession({ classId: joined.id, studentId: student.id });
+        router.push("/learn");
+        return;
       }
+      wrong(res.status === 401 ? WRONG_PICTURES : res.status === 429 ? LOCKED : TROUBLE);
+    } catch {
+      wrong(TROUBLE);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -119,7 +188,7 @@ export default function JoinPage() {
                   {error}
                 </p>
               )}
-              <Button type="submit" className="mt-6 w-full text-lg" disabled={code.trim().length < 4}>
+              <Button type="submit" className="mt-6 w-full text-lg" disabled={busy || code.trim().length < 4}>
                 Next <ArrowRight aria-hidden className="size-5" />
               </Button>
             </form>

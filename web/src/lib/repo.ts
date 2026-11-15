@@ -16,6 +16,7 @@ import type { ActivityResult, Classroom, Course, StudentProgress } from "./types
 
 const KEY_CLASSES = "cic.classes.v1";
 const KEY_SESSION = "cic.session.v1";
+const KEY_JOINED = "cic.joined-class.v1";
 const keyProgress = (classId: string, studentId: string) => `cic.progress.v1.${classId}.${studentId}`;
 const EVENT = "cic-store";
 
@@ -66,17 +67,31 @@ export function getCourse(id: string): Course | undefined {
 
 // ---------- classes ----------
 
+/** Classes stored only in this browser (the demo class + any saved locally). */
 export function getClasses(): Classroom[] {
   return [demoClass, ...read<Classroom[]>(KEY_CLASSES, [])];
 }
 
 export function getClass(id: string): Classroom | undefined {
-  return getClasses().find((c) => c.id === id);
+  const joined = read<Classroom | null>(KEY_JOINED, null);
+  return getClasses().find((c) => c.id === id) ?? (joined?.id === id ? joined : undefined);
 }
 
+/**
+ * Offline fallback for /join: searches local classes only. Classes from
+ * Supabase are looked up through /api/join/class instead.
+ */
 export function findClassByCode(code: string): Classroom | undefined {
   const norm = code.replace(/[^a-z0-9]/gi, "").toUpperCase();
   return getClasses().find((c) => c.code === norm);
+}
+
+/**
+ * The class a student joined through the server. Its roster holds only that
+ * student, so it's kept apart from the local classes used for code lookup.
+ */
+export function setJoinedClass(cls: Classroom) {
+  write(KEY_JOINED, cls);
 }
 
 export function saveClass(cls: Classroom) {
