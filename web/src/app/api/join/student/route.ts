@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { PICTURES, sameCode } from "@/lib/picture-codes";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { STUDENT_COOKIE, hashToken } from "@/lib/supabase/student-session";
 
 /**
  * Student step 2: check the three-picture code on the server.
@@ -16,13 +17,20 @@ const WINDOW_MINUTES = 15;
 const MAX_FAILS_PER_STUDENT = 5;
 const MAX_FAILS_PER_CLIENT = 20;
 const SESSION_DAYS = 30;
-const STUDENT_COOKIE = "cic_student";
-
-const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
 function clientKey(request: Request): string {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
-  return sha256(`join:${ip}`);
+  return createHash("sha256").update(`join:${ip}`).digest("hex");
+}
+
+/** "Leave": ends this device's student session. */
+export async function DELETE(request: Request) {
+  const token = request.headers.get("cookie")?.match(new RegExp(`(?:^|;\\s*)${STUDENT_COOKIE}=([^;]+)`))?.[1];
+  const db = supabaseAdmin();
+  if (db && token) await db.from("student_sessions").delete().eq("token_hash", hashToken(decodeURIComponent(token)));
+  const res = NextResponse.json({ ok: true });
+  res.cookies.delete(STUDENT_COOKIE);
+  return res;
 }
 
 export async function POST(request: Request) {
@@ -87,7 +95,7 @@ export async function POST(request: Request) {
   const expires = new Date(Date.now() + SESSION_DAYS * 86_400_000);
   const { error: sessionError } = await db
     .from("student_sessions")
-    .insert({ token_hash: sha256(token), student_id: student.id, expires_at: expires.toISOString() });
+    .insert({ token_hash: hashToken(token), student_id: student.id, expires_at: expires.toISOString() });
   if (sessionError) return NextResponse.json({ error: "server_error" }, { status: 500 });
 
   const c = student.classes;

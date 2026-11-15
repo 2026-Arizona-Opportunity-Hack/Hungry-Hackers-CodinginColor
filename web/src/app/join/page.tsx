@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Delete, Info, ShieldCheck } from "lucide-react";
 import { Brackets, Button, Logo, cx } from "@/components/ui";
 import { PICTURES, pictureName, sameCode } from "@/lib/picture-codes";
-import { findClassByCode, setJoinedClass, setSession } from "@/lib/repo";
+import { findClassByCode, loadServerProgress, setJoinedClass, setSession } from "@/lib/repo";
 import { DEMO_CLASS_CODE, DEMO_STUDENT } from "@/lib/demo-data";
 import type { Classroom, PictureCode } from "@/lib/types";
 
@@ -119,6 +119,7 @@ export default function JoinPage() {
       if (res.ok) {
         const joined = (await res.json()) as Classroom;
         setJoinedClass(joined);
+        await loadServerProgress();
         setSession({ classId: joined.id, studentId: student.id });
         router.push("/learn");
         return;

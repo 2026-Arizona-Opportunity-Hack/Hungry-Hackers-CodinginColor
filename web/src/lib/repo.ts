@@ -94,6 +94,38 @@ export function setJoinedClass(cls: Classroom) {
   write(KEY_JOINED, cls);
 }
 
+/** True for a class that lives in Supabase, whose progress is synced through /api/progress. */
+function isServerClass(classId: string): boolean {
+  return read<Classroom | null>(KEY_JOINED, null)?.id === classId && !getClasses().some((c) => c.id === classId);
+}
+
+/**
+ * Saves progress to the server in the background. The local copy is already
+ * written, so the screen never waits on the network.
+ */
+function sendProgress(body: Record<string, unknown>) {
+  fetch("/api/progress", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    keepalive: true,
+  }).catch(() => {
+    /* offline: kept locally */
+  });
+}
+
+/** After joining a Supabase class, load the student's saved progress so it follows them across devices. */
+export async function loadServerProgress(): Promise<void> {
+  try {
+    const res = await fetch("/api/progress");
+    if (!res.ok) return;
+    const { classId, progress } = (await res.json()) as { classId: string; progress: StudentProgress };
+    write(keyProgress(classId, progress.studentId), progress);
+  } catch {
+    /* offline: start from what this browser has */
+  }
+}
+
 export function saveClass(cls: Classroom) {
   const mine = read<Classroom[]>(KEY_CLASSES, []).filter((c) => c.id !== cls.id);
   write(KEY_CLASSES, [...mine, cls]);
@@ -135,6 +167,16 @@ export function recordResult(classId: string, studentId: string, result: Activit
     lastActiveAt: new Date().toISOString(),
     streakDays,
   } satisfies StudentProgress);
+  if (isServerClass(classId)) {
+    sendProgress({
+      type: "result",
+      activityId: result.activityId,
+      score: result.score,
+      attempts: result.attempts,
+      secondsOnTask: result.secondsOnTask,
+      response: result.response,
+    });
+  }
 }
 
 export function recordFailedCheck(classId: string, studentId: string, activityId: string) {
@@ -144,6 +186,7 @@ export function recordFailedCheck(classId: string, studentId: string, activityId
     failedChecks: { ...p.failedChecks, [activityId]: (p.failedChecks[activityId] ?? 0) + 1 },
     lastActiveAt: new Date().toISOString(),
   } satisfies StudentProgress);
+  if (isServerClass(classId)) sendProgress({ type: "failed", activityId });
 }
 
 export function resetStudentProgress(classId: string, studentId: string) {
@@ -166,6 +209,11 @@ export function setSession(s: StudentSession) {
 }
 
 export function clearSession() {
+  if (read<Classroom | null>(KEY_JOINED, null)) {
+    // End the server session too, so this device can't keep saving as this student.
+    fetch("/api/join/student", { method: "DELETE", keepalive: true }).catch(() => {});
+    remove(KEY_JOINED);
+  }
   remove(KEY_SESSION);
 }
 
