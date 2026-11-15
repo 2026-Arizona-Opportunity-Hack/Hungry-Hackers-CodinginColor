@@ -55,6 +55,7 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 
 | Role | How |
 |---|---|
+| Self-learner | `/start` → create an account → `/learn` (every module open) · sign back in at `/login?next=/learn` |
 | Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉 |
 | Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes |
 | External reviewer | `/login` → trial reviewer `demo.reviewer@example.com` / `CICreview-2026!` → `/review` (curriculum with answer keys, read-only, no student data) |
@@ -69,6 +70,8 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 5. **Read API for CIC's own dashboard**: `GET /api/v1/cohorts`, protected by `CIC_DASHBOARD_API_KEY`. See [docs/API.md](docs/API.md).
 
 **Separate logins per role:** a teacher, a CIC admin and a reviewer can all be signed in at the same time in one browser. Each role keeps its own login cookie (`cic-auth-teacher`, `cic-auth-admin`, `cic-auth-reviewer`, see `web/src/lib/auth-areas.ts`), so signing in as one never replaces another and signing out only ends that one. Admins view classes at `/admin/classes/...`; `/teach` is the teacher's own area.
+
+**Self-learners (no class needed):** anyone can make a free account at `/start` and learn on their own. They pick any module in any order, and every module you publish later appears for them automatically. Behind the scenes a learner is a normal student in one hidden, self-paced class (`classes.self_paced`), so the lesson screens, progress saving and the admin dashboard work unchanged. The admin sees them as an "Independent learners" cohort. Accounts are created by the server with the lowest role (`learner`); emails are not verified, and the sign-up rate limit is per server in memory.
 
 **Who can sign in:** students use a class code (no accounts). Teachers, CIC admins and reviewers sign in with email + password. Roles live in `public.profiles.role` and are only ever set by the server or the seed script, never by users. In the Supabase dashboard (Authentication → Sign In / Providers) turn **off** "Allow new users to sign up" so only admins can create accounts.
 

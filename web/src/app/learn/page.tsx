@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, CheckCircle2, Flame, Map, PartyPopper, Star, Users } from "lucide-react";
 import { Card, HeroPanel, LinkButton, Loading, Minutes } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
@@ -33,7 +34,7 @@ export default function StudentHome() {
   return (
     <div className="mx-auto max-w-4xl">
       <HeroPanel>
-        <p className="font-bold text-cic-tint">{started ? "Welcome back" : `Welcome to ${cls.name}`}</p>
+        <p className="font-bold text-cic-tint">{started ? "Welcome back" : cls.selfPaced ? "Welcome to your learning space" : `Welcome to ${cls.name}`}</p>
         <h1 className="mt-1 font-display text-4xl leading-tight md:text-5xl">Hi, {student.firstName}!</h1>
 
         {next && (
@@ -45,9 +46,18 @@ export default function StudentHome() {
                   Module {next.module.number}: {next.module.title}
                 </h2>
                 <p className="mt-1 text-cic-muted">
-                  {classModule > 1 ? `Most of your class is around Module ${classModule}, and that's okay. ` : ""}
-                  Every lesson teaches itself, so you can go at your own pace.
+                  {!cls.selfPaced && classModule > 1 ? `Most of your class is around Module ${classModule}, and that's okay. ` : ""}
+                  {cls.selfPaced
+                    ? "Every module is open to you. Start here, or pick any module you like."
+                    : "Every lesson teaches itself, so you can go at your own pace."}
                 </p>
+                {cls.selfPaced && (
+                  <p className="mt-1">
+                    <Link href="/learn/course" className="inline-flex min-h-11 items-center gap-1 font-bold text-cic-dark underline underline-offset-2">
+                      Choose a different module
+                    </Link>
+                  </p>
+                )}
               </>
             ) : (
               <>
@@ -133,9 +143,7 @@ export default function StudentHome() {
           <Users aria-hidden className="size-6" />
         </span>
         <div className="flex-1">
-          <p className="font-bold">
-            {cls.name}, {cls.school}
-          </p>
+          <p className="font-bold">{cls.selfPaced ? "Your self-paced learning" : `${cls.name}, ${cls.school}`}</p>
           <p className="text-sm text-cic-muted">
             {doneModules} of {modules.length} modules done in {course.title}
           </p>

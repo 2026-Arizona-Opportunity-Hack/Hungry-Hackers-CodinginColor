@@ -16,11 +16,12 @@ export async function POST(request: Request) {
 
   const { data, error } = await db
     .from("classes")
-    .select("id, name, school, roster_students(id, first_name, last_initial, created_at)")
+    .select("id, name, school, self_paced, roster_students(id, first_name, last_initial, created_at)")
     .eq("code", code)
     .maybeSingle();
   if (error) return NextResponse.json({ error: "server_error" }, { status: 500 });
-  if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  // The hidden class for independent learners can never be joined by code.
+  if (!data || data.self_paced) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const roster = [...(data.roster_students as { id: string; first_name: string; last_initial: string; created_at: string }[])]
     .sort((a, b) => a.created_at.localeCompare(b.created_at))

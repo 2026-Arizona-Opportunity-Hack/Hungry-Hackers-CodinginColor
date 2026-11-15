@@ -15,6 +15,8 @@ export const STUCK_FAILED_CHECKS = 3;
 export const STUCK_IDLE_DAYS = 3;
 
 export function assignedModules(course: Course, cls: Classroom): Module[] {
+  // Independent learners get every module, including ones published later.
+  if (cls.selfPaced) return course.modules;
   return cls.assignedModuleIds
     .map((id) => course.modules.find((m) => m.id === id))
     .filter((m): m is Module => Boolean(m));
@@ -33,8 +35,9 @@ export function moduleDoneCount(p: StudentProgress | undefined, m: Module): numb
 }
 
 /** Modules unlock in sequence: a module opens when the one before it is complete. */
-export function moduleUnlocked(p: StudentProgress | undefined, modules: Module[], index: number): boolean {
-  return index === 0 || moduleComplete(p, modules[index - 1]);
+export function moduleUnlocked(p: StudentProgress | undefined, modules: Module[], index: number, selfPaced = false): boolean {
+  // Self-paced learners choose their own modules, in any order.
+  return selfPaced || index === 0 || moduleComplete(p, modules[index - 1]);
 }
 
 /** Inside a module, activities unlock in order too. */

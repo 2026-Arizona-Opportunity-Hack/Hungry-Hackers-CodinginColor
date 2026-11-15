@@ -11,6 +11,7 @@ export const COOKIE_NAME: Record<Role, string> = {
   teacher: "cic-auth-teacher",
   admin: "cic-auth-admin",
   reviewer: "cic-auth-reviewer",
+  learner: "cic-auth-learner",
 };
 
 /**

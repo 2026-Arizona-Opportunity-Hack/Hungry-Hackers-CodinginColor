@@ -169,4 +169,6 @@ export interface Classroom {
   /** Set for classes stored in Supabase; used by the admin roll-ups. */
   schoolId?: string | null;
   teacherId?: string;
+  /** Independent learners' hidden class: every module is open and new ones appear automatically. */
+  selfPaced?: boolean;
 }

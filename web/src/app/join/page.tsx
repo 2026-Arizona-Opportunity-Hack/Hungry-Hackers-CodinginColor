@@ -184,6 +184,17 @@ export default function JoinPage() {
               <p id="code-help" className="mt-2 text-sm text-cic-muted">
                 Your teacher will write it on the board.
               </p>
+              <p className="mt-3 text-sm text-cic-muted">
+                Learning on your own, without a class?{" "}
+                <a href="/login?next=/learn" className="font-bold text-cic-dark underline">
+                  Sign in
+                </a>{" "}
+                or{" "}
+                <a href="/start" className="font-bold text-cic-dark underline">
+                  create a free account
+                </a>
+                .
+              </p>
               {error && (
                 <p id="code-error" role="alert" className="mt-2 rounded-lg bg-cic-danger-bg p-3 text-cic-danger">
                   {error}

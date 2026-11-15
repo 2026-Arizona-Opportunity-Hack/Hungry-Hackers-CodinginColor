@@ -10,7 +10,7 @@ import { useStudent } from "@/lib/use-student";
 export default function CourseRoadmap() {
   const ctx = useStudent();
   if (!ctx) return <Loading />;
-  const { course, modules, progress } = ctx;
+  const { course, modules, progress, cls } = ctx;
   const minutes = modules.flatMap((m) => m.activities).reduce((s, a) => s + a.minutes, 0);
 
   return (
@@ -27,7 +27,7 @@ export default function CourseRoadmap() {
       <ol aria-label="Course modules" className="relative mt-10">
         {modules.map((m, i) => {
           const done = moduleComplete(progress, m);
-          const open = moduleUnlocked(progress, modules, i);
+          const open = moduleUnlocked(progress, modules, i, cls.selfPaced);
           const count = moduleDoneCount(progress, m);
           const current = open && !done;
           const state = done ? "Complete" : current ? (count > 0 ? "In progress" : "Ready to start") : "Locked";

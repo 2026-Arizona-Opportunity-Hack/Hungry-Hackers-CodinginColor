@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { introAiCourse } from "./curriculum/intro-ai";
+import { supabaseBrowserFor } from "./supabase/client";
 import { demoClass, demoProgress } from "./demo-data";
 import type { ActivityResult, Classroom, Course, StudentProgress } from "./types";
 
@@ -240,7 +241,10 @@ export function setSession(s: StudentSession) {
 }
 
 export function clearSession() {
-  if (read<Classroom | null>(KEY_JOINED, null)) {
+  const joined = read<Classroom | null>(KEY_JOINED, null);
+  // A self-learner also has a real login: end it too, so "Leave" really signs them out.
+  if (joined?.selfPaced) void supabaseBrowserFor("learner").auth.signOut({ scope: "local" });
+  if (joined) {
     // End the server session too, so this device can't keep saving as this student.
     fetch("/api/join/student", { method: "DELETE", keepalive: true }).catch(() => {});
     remove(KEY_JOINED);

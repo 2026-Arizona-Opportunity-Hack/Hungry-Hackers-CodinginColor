@@ -49,14 +49,17 @@ export async function POST(request: Request) {
   const { data: row, error } = await db
     .from("roster_students")
     .select(
-      "id, first_name, last_initial, picture_code, " +
-        "classes!inner(id, name, school, teacher_name, code, course_id, assigned_module_ids, created_at)",
+      "id, first_name, last_initial, picture_code, user_id, " +
+        "classes!inner(id, name, school, teacher_name, code, course_id, assigned_module_ids, created_at, self_paced)",
     )
     .eq("id", studentId)
     .eq("class_id", classId)
     .maybeSingle();
   if (error) return NextResponse.json({ error: "server_error" }, { status: 500 });
   if (!row) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  // Learners with their own accounts sign in with email and password, never a picture code.
+  const owned = row as unknown as { user_id: string | null; classes: { self_paced: boolean } };
+  if (owned.user_id || owned.classes.self_paced) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const student = row as unknown as {
     id: string;
