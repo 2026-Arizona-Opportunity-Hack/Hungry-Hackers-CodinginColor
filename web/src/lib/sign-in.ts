@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { loadServerProgress, setJoinedClass, setSession } from "./repo";
 import { asRole, type Role } from "./roles";
 import { supabaseBrowserFor } from "./supabase/client";
+import { clearDemoSandbox } from "./teacher-store";
 import type { Classroom } from "./types";
 
 /** After a learner's login is stored, start their student session so the lesson screens work. */
@@ -36,6 +37,8 @@ export async function signInWithPassword(email: string, password: string): Promi
   const role = asRole(profile.data?.role);
   const saved = await supabaseBrowserFor(role).auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
   if (saved.error) return { ok: false, message: "We couldn't start your session. Please try again." };
+  // Every sign-in starts the trial teacher's sandbox fresh.
+  clearDemoSandbox();
 
   if (role === "learner" && !(await startLearnerSession())) {
     return { ok: false, message: "We couldn't open your lessons. Please try again." };

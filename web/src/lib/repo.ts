@@ -305,7 +305,19 @@ export function setSession(s: StudentSession) {
   write(KEY_SESSION, s);
 }
 
+/**
+ * Join the sample class as one of its students. It's a shared demo login, so
+ * its work stays in this browser only and starts over from the sample data on
+ * every join (and again on "Leave"), so the next person sees it fresh.
+ */
+export function startDemoSession(studentId: string) {
+  remove(keyProgress(demoClass.id, studentId));
+  write(KEY_SESSION, { classId: demoClass.id, studentId } satisfies StudentSession);
+}
+
 export function clearSession() {
+  const session = getSession();
+  if (session?.classId === demoClass.id) remove(keyProgress(session.classId, session.studentId));
   const joined = read<Classroom | null>(KEY_JOINED, null);
   // A self-learner also has a real login: end it too, so "Leave" really signs them out.
   if (joined?.selfPaced) void supabaseBrowserFor("learner").auth.signOut({ scope: "local" });

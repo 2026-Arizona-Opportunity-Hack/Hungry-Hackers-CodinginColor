@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
+import { DEMO_CLASS_CODE } from "@/lib/demo-data";
 import { PICTURES, sameCode } from "@/lib/picture-codes";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { STUDENT_COOKIE, hashToken } from "@/lib/supabase/student-session";
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
   // Learners with their own accounts sign in with email and password, never a picture code.
   const owned = row as unknown as { user_id: string | null; classes: { self_paced: boolean } };
   if (owned.user_id || owned.classes.self_paced) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  // The shared sample class runs in the browser only (see /api/join/class).
+  if ((row as unknown as { classes: { code: string } }).classes.code === DEMO_CLASS_CODE) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
   const student = row as unknown as {
     id: string;

@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Delete, Info, ShieldCheck } from "lucide-react";
 import { Brackets, Button, Loading, Logo, cx } from "@/components/ui";
 import { PICTURES, pictureName, sameCode } from "@/lib/picture-codes";
-import { findClassByCode, loadServerProgress, setJoinedClass, setSession } from "@/lib/repo";
-import { DEMO_CLASS_CODE, DEMO_STUDENT } from "@/lib/demo-data";
+import { findClassByCode, loadServerProgress, setJoinedClass, setSession, startDemoSession } from "@/lib/repo";
+import { DEMO_CLASS_CODE, DEMO_STUDENT, demoClass } from "@/lib/demo-data";
 import type { Classroom, PictureCode } from "@/lib/types";
 
 type Step = "code" | "name" | "picture";
@@ -35,16 +35,21 @@ const TROUBLE = "Something went wrong on our end. Please try again in a moment."
 
 /** Asks the server first; falls back to local demo data if Supabase isn't reachable or set up. */
 async function lookUpClass(code: string): Promise<JoinClass | "not_found" | "error"> {
-  try {
-    const res = await fetch("/api/join/class", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code }),
-    });
-    if (res.ok) return { ...(await res.json()), source: "server" };
-    if (res.status !== 404 && res.status !== 503) return "error";
-  } catch {
-    /* offline — try local data */
+  // The sample class is a shared demo login: it always runs from local data, so
+  // nothing a visitor does is saved to the server.
+  const isDemo = code.replace(/[^a-z0-9]/gi, "").toUpperCase() === DEMO_CLASS_CODE;
+  if (!isDemo) {
+    try {
+      const res = await fetch("/api/join/class", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      if (res.ok) return { ...(await res.json()), source: "server" };
+      if (res.status !== 404 && res.status !== 503) return "error";
+    } catch {
+      /* offline — try local data */
+    }
   }
   const local = findClassByCode(code);
   return local ? { id: local.id, name: local.name, school: local.school, roster: local.roster, source: "local" } : "not_found";
@@ -103,7 +108,8 @@ export default function JoinPage() {
 
     if (cls.source === "local") {
       if (student.pictureCode && sameCode(next, student.pictureCode)) {
-        setSession({ classId: cls.id, studentId: student.id });
+        if (cls.id === demoClass.id) startDemoSession(student.id);
+        else setSession({ classId: cls.id, studentId: student.id });
         router.push("/learn");
       } else wrong(WRONG_PICTURES);
       return;

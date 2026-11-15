@@ -5,27 +5,31 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Info, LogIn } from "lucide-react";
 import { Brackets, Button, Loading, Logo } from "@/components/ui";
-import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-accounts";
+import { DEMO_TEACHER_EMAIL, DEMO_TEACHER_PASSWORD } from "@/lib/demo-accounts";
 import { safeNextPath } from "@/lib/roles";
 import { signInWithPassword } from "@/lib/sign-in";
 
-// Public on purpose: a teacher who only sees the sample class, and a reviewer
-// who only sees the curriculum, and a CIC admin with full powers for the demo.
-// Created by `npm run seed:demo`. Rotate or remove these before real use.
+// Public on purpose: a teacher who only sees the sample class. Whatever a trial
+// teacher changes stays in their own browser and resets at the next sign-in, so
+// every visitor starts fresh. The demo CIC admin and reviewer are NOT listed here.
 const TRIALS = [
-  { id: "teacher", label: "Teacher", note: "Explore a sample class of 24 students.", email: "demo.teacher@example.com", password: "CICdemo-2026!" },
-  { id: "admin", label: "CIC Admin", note: "Full access: every school and cohort, grant numbers, the curriculum editor with publishing, and adding schools and accounts.", email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD },
-  { id: "reviewer", label: "External reviewer", note: "Read the whole curriculum, answer keys included.", email: "demo.reviewer@example.com", password: "CICreview-2026!" },
+  {
+    id: "teacher",
+    label: "Teacher",
+    note: "Explore a sample class of 24 students. Your changes stay on this device and reset when you sign out.",
+    email: DEMO_TEACHER_EMAIL,
+    password: DEMO_TEACHER_PASSWORD,
+  },
 ];
 
 const VARIANTS = {
-  teacher: { title: "Sign in", blurb: "For teachers, CIC staff and curriculum reviewers.", trials: ["teacher", "admin", "reviewer"] },
+  teacher: { title: "Sign in", blurb: "For teachers, CIC staff and curriculum reviewers.", trials: ["teacher"] },
   admin: {
     title: "CIC Admin sign in",
     blurb: "See every class and school, pull grant numbers, add partner schools and publish curriculum.",
-    trials: ["admin"],
+    trials: [] as string[],
   },
-  reviewer: { title: "Reviewer sign in", blurb: "Read-only access to the full curriculum, answer keys included.", trials: ["reviewer"] },
+  reviewer: { title: "Reviewer sign in", blurb: "Read-only access to the full curriculum, answer keys included.", trials: [] as string[] },
   learner: { title: "Welcome back", blurb: "Sign in to pick up your self-paced learning where you left off.", trials: [] as string[] },
 };
 
@@ -141,15 +145,16 @@ export default function LoginPage() {
                     disabled={busy}
                     onClick={(e) => signIn(e, { email: t.email, password: t.password })}
                   >
-                    Sign in as {t.id === "admin" ? t.label : t.label.toLowerCase()}
+                    Sign in as {t.label.toLowerCase()}
                   </Button>
                 </li>
               ))}
             </ul>
           </section>
-          ) : variant === "admin" ? (
+          ) : variant === "admin" || variant === "reviewer" ? (
             <p className="mt-6 rounded-2xl bg-cic-tint p-4 text-sm">
-              Admin accounts are created by the CIC team. Use the email and password you were given.
+              {variant === "admin" ? "Admin" : "Reviewer"} accounts are created by the CIC team. Use the email and password you were
+              given.
             </p>
           ) : null}
 

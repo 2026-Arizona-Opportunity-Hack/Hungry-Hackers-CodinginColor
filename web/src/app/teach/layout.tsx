@@ -1,11 +1,12 @@
 "use client";
 
-import { BarChart3, BookOpen, ChevronDown, LayoutDashboard, LogOut, PlusCircle, School, Users } from "lucide-react";
+import { BarChart3, BookOpen, ChevronDown, FlaskConical, LayoutDashboard, LogOut, PlusCircle, School, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { Button, LinkButton, Loading } from "@/components/ui";
 import { useCurriculumReady } from "@/lib/repo";
-import { signOutTeacher } from "@/lib/teacher-store";
+import { isDemoTeacher, signOutTeacher } from "@/lib/teacher-store";
 import { selectClass, useTeacherClass } from "@/lib/use-teacher";
 
 const NAV: NavItem[] = [
@@ -21,6 +22,10 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
   const path = usePathname();
   const { ctx, error } = useTeacherClass();
   const ready = useCurriculumReady();
+  const [demo, setDemo] = useState(false);
+  useEffect(() => {
+    isDemoTeacher().then(setDemo, () => setDemo(false));
+  }, []);
   if ((ctx === undefined && !error) || !ready) return <Loading label="Loading your classes…" />;
   // The class picker isn't relevant while making a new class.
   const showSwitcher = ctx && path !== "/teach/new";
@@ -44,6 +49,15 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
         </>
       }
     >
+      {demo && (
+        <p role="note" className="mb-4 flex items-start gap-2 rounded-2xl bg-cic-tint p-3 text-sm text-cic-darker print:hidden">
+          <FlaskConical aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <span>
+            <strong>Demo account.</strong> Try anything: new classes and students stay on this device only and reset when
+            you sign out.
+          </span>
+        </p>
+      )}
       {showSwitcher && (
         <div className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border-2 border-cic-line bg-white p-3 shadow-slab-gray print:hidden">
           <div className="min-w-0 flex-1">
