@@ -43,9 +43,13 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 
 ## Team
 
-<!-- Replace with real people; link GitHub profiles so this repo works as your portfolio -->
-- [Name](https://github.com/username) — role
-- [Name](https://github.com/username) — role
+**Hungry Hackers**, at [ASU Fall Hackathon 2026](https://www.ohack.dev/hack/fall-2026):
+
+- **Daksh Kalra** — Frontend
+- **Ashwin Joshi** — Backend
+- **Praneeth Kemburu** — Frontend, features & testing
+- **Yogansh Chandaluri** — Testing & features
+- **Sarvesh Satish** — Testing & features
 
 ## What we built
 
@@ -83,10 +87,19 @@ Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + ro
 
 Every page has a **Display** button (bottom left) with:
 
+- **Language:** the whole site in 16 languages — English, Español, العربية, 简体中文, Tiếng Việt, Filipino, Français, Português, हिन्दी, नेपाली, Soomaali, Kiswahili, Русский, Українська, 한국어 and 日本語 — through Google's Website Translator. Nothing is sent to Google until a visitor picks a language other than English; then the visible page text is sent to be translated (`web/src/lib/translate.ts`). The picker lists each language in its own name so people can find theirs, and language names are never themselves translated.
 - **Theme:** match device, light or dark. Dark mode swaps the brand color tokens in `web/src/app/globals.css`, so all screens follow it, the Python editor included. Text stays at 6:1 contrast or better.
 - **Text size:** four steps up to 150%. All sizes and spacing are in rem, so the whole layout scales.
 - **Easy-read font** (Lexend) and **extra text spacing** (WCAG 1.4.12 values), which help many dyslexic readers.
 - **Reduce motion:** turns off animations and confetti (also automatic when the device asks for reduced motion).
+
+Inside a lesson there are more reading helpers (`web/src/components/reading-tools.tsx`):
+
+- **Highlighter:** tap any word in the lesson text to mark it in yellow; tap again to remove it. Highlights are never saved.
+- **Read word by word:** one word is lit up at a time, stepped by hand (Next/Back buttons or arrow keys), or played automatically at three speeds. You can highlight the word you're on without leaving the reader.
+- **Mark for review:** quiz questions can be flagged to come back to; the flag is on-screen help only and clears on submit.
+
+Both reading tools are English-only for now: splitting text into word spans would break Google's page translation, so they turn themselves off when another language is chosen.
 
 Choices are saved per device (`web/src/lib/display-prefs.ts`) and applied before the page draws. The rest of the site keeps WCAG 2.2 AA basics: a skip link, visible focus rings, keyboard-only use (the code editor is never a keyboard trap) and labelled controls.
 
@@ -95,7 +108,7 @@ Choices are saved per device (`web/src/lib/display-prefs.ts`) and applied before
 - Frontend: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, lucide icons
 - Code editor / runner: CodeMirror 6 + Pyodide (Python in a Web Worker, no server)
 - Backend / database: Supabase (Postgres, row-level security, email + password auth for teachers). Schema is in `supabase/migrations/`
-- APIs / services: Supabase only — see `.env.example`
+- APIs / services: Supabase, plus Google's Website Translator (only contacted after a visitor picks a non-English language) — see `.env.example`
 
 ## Run it locally
 
