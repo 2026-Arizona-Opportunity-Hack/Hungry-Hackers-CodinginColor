@@ -173,12 +173,15 @@ export function newClassCode(): string {
 // ---------- progress ----------
 
 function emptyProgress(studentId: string): StudentProgress {
-  return { studentId, results: {}, lastActiveAt: null, failedChecks: {}, streakDays: 0 };
+  return { studentId, results: {}, lastActiveAt: null, failedChecks: {}, streakDays: 0, skippedIds: [] };
 }
 
 export function getStudentProgress(classId: string, studentId: string): StudentProgress {
   const seeded = classId === demoClass.id ? demoProgress()[studentId] : undefined;
-  return read<StudentProgress | null>(keyProgress(classId, studentId), null) ?? seeded ?? emptyProgress(studentId);
+  const found = read<StudentProgress | null>(keyProgress(classId, studentId), null) ?? seeded ?? emptyProgress(studentId);
+  // Progress saved before the skip feature has no skippedIds — normalize here
+  // so no caller has to guard against undefined.
+  return { ...found, skippedIds: found.skippedIds ?? [] };
 }
 
 export function getClassProgress(cls: Classroom): Record<string, StudentProgress> {
@@ -195,6 +198,8 @@ export function recordResult(classId: string, studentId: string, result: Activit
   write(keyProgress(classId, studentId), {
     ...p,
     results: { ...p.results, [result.activityId]: result },
+    // Finishing an activity removes it from the skip list.
+    skippedIds: (p.skippedIds ?? []).filter((id) => id !== result.activityId),
     lastActiveAt: new Date().toISOString(),
     streakDays,
   } satisfies StudentProgress);
@@ -208,6 +213,33 @@ export function recordResult(classId: string, studentId: string, result: Activit
       response: result.response,
     });
   }
+}
+
+/**
+ * Skip an activity for later. It still counts as NOT done, but it no longer
+ * blocks the activities after it — the student can come back to it from the
+ * "come back to" list in the lesson or the stepper. Stored on the device only:
+ * there's no secret here, and syncing would need a schema migration.
+ */
+export function skipActivity(classId: string, studentId: string, activityId: string) {
+  const p = getStudentProgress(classId, studentId);
+  if (p.results[activityId] || p.skippedIds?.includes(activityId)) return;
+  write(keyProgress(classId, studentId), {
+    ...p,
+    skippedIds: [...(p.skippedIds ?? []), activityId],
+    lastActiveAt: new Date().toISOString(),
+  } satisfies StudentProgress);
+}
+
+/** Undo a skip: the activity goes back to being the student's current step. */
+export function unskipActivity(classId: string, studentId: string, activityId: string) {
+  const p = getStudentProgress(classId, studentId);
+  if (!p.skippedIds?.includes(activityId)) return;
+  write(keyProgress(classId, studentId), {
+    ...p,
+    skippedIds: p.skippedIds.filter((id) => id !== activityId),
+    lastActiveAt: new Date().toISOString(),
+  } satisfies StudentProgress);
 }
 
 export function recordFailedCheck(classId: string, studentId: string, activityId: string) {

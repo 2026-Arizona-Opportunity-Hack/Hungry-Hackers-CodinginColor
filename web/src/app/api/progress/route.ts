@@ -51,6 +51,8 @@ export async function GET(request: Request) {
     lastActiveAt: student.data.last_active_at,
     failedChecks: Object.fromEntries(fails.data.map((f) => [f.activity_id, f.count])),
     streakDays: student.data.streak_days,
+    // Skips are device-local; the server only stores finished work.
+    skippedIds: [],
   };
   return NextResponse.json({ classId: me.classId, progress });
 }
