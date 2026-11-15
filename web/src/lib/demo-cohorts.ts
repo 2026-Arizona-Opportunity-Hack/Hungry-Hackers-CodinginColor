@@ -85,6 +85,7 @@ export function cohortProgress(prefix: string, cohort: DemoCohort, seedBase: num
       lastActiveAt: done > 0 ? new Date(base).toISOString() : null,
       failedChecks,
       streakDays: done > 0 && idle === 0 ? 1 + Math.floor(r() * 7) : 0,
+      skippedIds: [],
     };
   });
   return out;

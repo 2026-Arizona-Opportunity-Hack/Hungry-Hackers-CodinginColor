@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, Lock, PartyPopper, RotateCcw, Timer, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, FastForward, Lock, PartyPopper, RotateCcw, Timer, TrendingUp, Undo2 } from "lucide-react";
 import { CheckActivity, ExitActivity, QuizActivity, SlidesActivity, WorksheetActivity, type Completion } from "@/components/activities";
 import { CodeActivity } from "@/components/code-activity";
 import { Confetti } from "@/components/confetti";
 import { Brackets, Button, Card, LinkButton, Loading, cx } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
-import { isDone, moduleGain, moduleUnlocked, pct, signedPct } from "@/lib/analytics";
-import { recordFailedCheck, recordResult } from "@/lib/repo";
+import { isDone, isSkipped, moduleGain, moduleUnlocked, pct, signedPct, skippedActivities } from "@/lib/analytics";
+import { recordFailedCheck, recordResult, skipActivity, unskipActivity } from "@/lib/repo";
 import { STAGE_LABELS, type Activity } from "@/lib/types";
 import { useStudent } from "@/lib/use-student";
 
@@ -77,7 +77,11 @@ export default function LessonPlayer() {
   const [redoCount, setRedoCount] = useState(0);
 
   const mod = ctx?.modules.find((m) => m.id === moduleId);
-  const index = mod ? mod.activities.findIndex((a) => !isDone(ctx?.progress, a.id)) : -1;
+  // Skipped activities don't block: show the first undone, unskipped activity,
+  // and fall back to the first skipped one when that's all that remains.
+  const firstOpen = mod?.activities.findIndex((a) => !isDone(ctx?.progress, a.id) && !isSkipped(ctx?.progress, a.id)) ?? -1;
+  const firstUndone = mod?.activities.findIndex((a) => !isDone(ctx?.progress, a.id)) ?? -1;
+  const index = firstOpen !== -1 ? firstOpen : firstUndone;
   const current: Activity | undefined = mod && index !== -1 ? mod.activities[index] : undefined;
   const timer = useActiveTimer(current?.id);
 
@@ -202,8 +206,9 @@ export default function LessonPlayer() {
       <ol aria-label="Lesson steps" className="mt-5 flex gap-2 overflow-x-auto pb-2">
         {mod.activities.map((a, i) => {
           const done = isDone(progress, a.id);
+          const skipped = !done && isSkipped(progress, a.id);
           const now = reviewing ? a.id === reviewing.id : i === index;
-          const Icon = done ? Check : STAGE_ICONS[a.kind];
+          const Icon = done ? Check : skipped ? FastForward : STAGE_ICONS[a.kind];
           const step = (
             <>
               <span
@@ -211,7 +216,8 @@ export default function LessonPlayer() {
                   "grid size-11 place-items-center rounded-2xl transition-colors duration-500",
                   done && !now && "bg-cic-green text-white",
                   now && "animate-pop bg-cic-dark text-white shadow-slab",
-                  !done && !now && "bg-cic-tint text-cic-dark",
+                  !done && !now && !skipped && "bg-cic-tint text-cic-dark",
+                  skipped && !now && "border-2 border-dashed border-cic-warn bg-cic-warn-bg text-cic-warn",
                 )}
               >
                 <Icon aria-hidden className="size-5" strokeWidth={done ? 3 : 2} />
@@ -219,7 +225,7 @@ export default function LessonPlayer() {
               <span className={cx("mt-2 block h-1.5 w-full rounded-full", done ? "bg-cic-green" : now ? "bg-cic-dark" : "bg-cic-tint")} />
               <span className={cx("mt-1 block text-center text-xs font-bold", now ? "text-cic-dark" : "text-cic-muted")}>
                 {STAGE_LABELS[a.kind]}
-                <span className="sr-only">{now ? " — showing now" : done ? " — done, open to review" : " — not started"}</span>
+                <span className="sr-only">{now ? " — showing now" : done ? " — done, open to review" : skipped ? " — skipped, come back later" : " — not started"}</span>
               </span>
             </>
           );
@@ -241,6 +247,19 @@ export default function LessonPlayer() {
           );
         })}
       </ol>
+
+      {/* Come back to these: skipped but unfinished activities in this module. */}
+      {skippedActivities(progress, mod).length > 0 && !reviewing && (
+        <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-cic-warn bg-cic-warn-bg p-4">
+          <FastForward aria-hidden className="size-5 shrink-0 text-cic-warn" />
+          <p className="min-w-48 flex-1 font-bold text-cic-darker">
+            Come back to {skippedActivities(progress, mod).length === 1 ? "this" : "these"} when you&apos;re ready —{" "}
+            {skippedActivities(progress, mod)
+              .map((a) => a.title)
+              .join(" · ")}
+          </p>
+        </div>
+      )}
 
       {reviewing ? (
         <div key={`review-${reviewing.id}-${reviewMode}-${redoCount}`} className="mt-6 animate-rise">
@@ -310,12 +329,41 @@ export default function LessonPlayer() {
             </h1>
             <ActivityTimer secs={timer.secs} estimate={current.minutes} />
           </div>
+          {isSkipped(progress, current.id) && (
+            <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-dashed border-cic-warn bg-cic-warn-bg p-4">
+              <p className="min-w-48 flex-1 font-bold text-cic-darker">
+                You skipped this — no pressure. It still counts as not done.
+              </p>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  unskipActivity(cls.id, student.id, current.id);
+                  window.scrollTo({ top: 0 });
+                }}
+              >
+                <Undo2 aria-hidden className="size-5" /> Put it back in my path
+              </Button>
+            </div>
+          )}
           {current.kind === "slides" && <SlidesActivity key={current.id} activity={current} onComplete={complete} />}
           {(current.kind === "pretest" || current.kind === "posttest") && <QuizActivity key={current.id} activity={current} onComplete={complete} />}
           {current.kind === "check" && <CheckActivity key={current.id} activity={current} onComplete={complete} onFailedCheck={failed} />}
           {current.kind === "worksheet" && <WorksheetActivity key={current.id} activity={current} onComplete={complete} />}
           {current.kind === "code" && <CodeActivity key={current.id} activity={current} onComplete={complete} onFailedCheck={failed} />}
           {current.kind === "exit" && <ExitActivity key={current.id} activity={current} onComplete={complete} />}
+          {!isSkipped(progress, current.id) && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  skipActivity(cls.id, student.id, current.id);
+                  window.scrollTo({ top: 0 });
+                }}
+              >
+                <FastForward aria-hidden className="size-5" /> Skip for now — I&apos;ll come back
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <section className="relative mt-6 animate-rise overflow-hidden rounded-[24px] bg-cic-dark p-6 text-white shadow-slab md:p-10">
