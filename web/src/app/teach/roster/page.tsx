@@ -26,6 +26,7 @@ export default function RosterPage() {
   const [adding, setAdding] = useState(false);
   const [pending, setPending] = useState<RosterParseResult | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const rows = useMemo(() => {
     if (!ctx) return [];
@@ -47,15 +48,18 @@ export default function RosterPage() {
   const shown = filter === "all" ? rows : rows.filter((r) => r.st.status === filter);
 
   async function addStudents() {
-    if (!pending) return;
+    if (!pending || saving) return;
     const existing = new Set(cls.roster.map((s) => `${s.firstName} ${s.lastInitial}`.toLowerCase()));
     const fresh = pending.students.filter((s) => !existing.has(`${s.firstName} ${s.lastInitial}`.toLowerCase()));
+    setSaving(true);
     try {
       await addStudentsToClass(cls.id, fresh);
     } catch (e) {
       setSaved(`Couldn't save the students: ${e instanceof Error ? e.message : "please try again"}.`);
+      setSaving(false);
       return;
     }
+    setSaving(false);
     setSaved(`Added ${fresh.length} student${fresh.length === 1 ? "" : "s"}${fresh.length < pending.students.length ? " (duplicates skipped)" : ""}.`);
     setPending(null);
     setAdding(false);
@@ -90,8 +94,12 @@ export default function RosterPage() {
         <Card className="mb-6">
           <h2 className="mb-3 text-lg font-bold">Import students</h2>
           <RosterImport seedOffset={cls.roster.length} onParsed={setPending} />
-          <Button className="mt-4" disabled={!pending?.students.length} onClick={addStudents}>
-            Add {pending?.students.length ?? 0} students
+          <Button className="mt-4" disabled={!pending?.students.length || saving} onClick={addStudents}>
+            {saving ? (
+              <Loading inline label="Adding students" />
+            ) : (
+              <>Add {pending?.students.length ?? 0} students</>
+            )}
           </Button>
         </Card>
       )}

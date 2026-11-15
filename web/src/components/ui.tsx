@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, CircleDashed, Clock, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDashed, Clock } from "lucide-react";
 import type { StudentStatus } from "@/lib/analytics";
 
 export function cx(...xs: (string | false | null | undefined)[]) {
@@ -97,11 +97,36 @@ export function StatusBadge({ status }: { status: StudentStatus }) {
   );
 }
 
-export function Loading({ label = "Loading…" }: { label?: string }) {
+/**
+ * Brand loading indicator: the "< >" code-tag brackets from the CIC mark hop
+ * in alternation above the label. Glyphs are Arial Black (font-display) and
+ * the label is Arial (body font) — the same fonts as everything else.
+ * Use `size` for page-level loads and `inline` for buttons/status lines.
+ */
+export function Loading({
+  label = "Loading…",
+  size = "md",
+  inline = false,
+}: {
+  label?: string;
+  size?: "md" | "sm";
+  inline?: boolean;
+}) {
+  const glyph = size === "sm" ? "text-2xl" : "text-4xl";
   return (
-    <div role="status" className="flex items-center gap-2 p-8 text-cic-muted">
-      <Loader2 aria-hidden className="size-5 animate-spin" />
-      {label}
+    <div role="status" className={cx("flex text-cic-muted", inline ? "items-center gap-2" : "flex-col items-center gap-1 p-8 text-center")}>
+      <span aria-hidden className={cx("font-display leading-none text-cic-dark", inline && "text-lg")}>
+        <span className={cx("inline-block animate-bracket-bounce", !inline && glyph)}>{"<"}</span>
+        <span className={cx("inline-block animate-bracket-bounce [animation-delay:200ms]", !inline && glyph)}>{">"}</span>
+      </span>
+      <span className={cx(!inline && "mt-1 font-bold", inline && "text-sm")}>
+        {label}
+        <span aria-hidden>
+          <span className="inline-block animate-dot-bounce">.</span>
+          <span className="inline-block animate-dot-bounce [animation-delay:200ms]">.</span>
+          <span className="inline-block animate-dot-bounce [animation-delay:400ms]">.</span>
+        </span>
+      </span>
     </div>
   );
 }

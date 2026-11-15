@@ -2,15 +2,19 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, FlaskConical, Lightbulb, Loader2, Play, RotateCcw, Square, XCircle } from "lucide-react";
-import { Button, cx } from "./ui";
+import { CheckCircle2, FlaskConical, Lightbulb, Play, RotateCcw, Square, XCircle } from "lucide-react";
+import { Button, Loading, cx } from "./ui";
 import type { ActivityProps } from "./activities";
 import { PythonRunner, type TestResult } from "@/lib/python-runner";
 
 // CodeMirror only loads when a code activity opens.
 const CodeEditor = dynamic(() => import("./code-editor").then((m) => m.CodeEditor), {
   ssr: false,
-  loading: () => <div className="h-56 animate-pulse rounded-xl bg-cic-tint" />,
+  loading: () => (
+    <div className="grid h-56 place-items-center rounded-xl bg-cic-tint">
+      <Loading inline label="Loading editor" />
+    </div>
+  ),
 });
 
 const MAX_ATTEMPTS_BEFORE_SKIP = 3;
@@ -129,11 +133,7 @@ export function CodeActivity({ activity, onComplete, onFailedCheck }: ActivityPr
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-mono font-bold">main.py</h2>
           <p role="status" className="flex items-center gap-1.5 text-sm text-cic-muted">
-            {pyState === "loading" && (
-              <>
-                <Loader2 aria-hidden className="size-4 animate-spin" /> Loading Python…
-              </>
-            )}
+            {pyState === "loading" && <Loading inline size="sm" label="Loading Python" />}
             {pyState === "ready" && (
               <>
                 <CheckCircle2 aria-hidden className="size-4 text-cic-dark" /> Python ready — runs in your browser
@@ -154,11 +154,23 @@ export function CodeActivity({ activity, onComplete, onFailedCheck }: ActivityPr
             </Button>
           ) : (
             <Button onClick={run} disabled={pyState !== "ready"}>
-              <Play aria-hidden className="size-5" /> Run code
+              {busy === "run" ? (
+                <Loading inline label="Running" />
+              ) : (
+                <>
+                  <Play aria-hidden className="size-5" /> Run code
+                </>
+              )}
             </Button>
           )}
           <Button variant="secondary" onClick={check} disabled={pyState !== "ready" || busy !== null}>
-            <FlaskConical aria-hidden className="size-5" /> Check my code
+            {busy === "test" ? (
+              <Loading inline label="Checking" />
+            ) : (
+              <>
+                <FlaskConical aria-hidden className="size-5" /> Check my code
+              </>
+            )}
           </Button>
           <Button variant="ghost" onClick={() => setCode(activity.starter)} disabled={busy !== null}>
             <RotateCcw aria-hidden className="size-4" /> Reset
@@ -178,7 +190,11 @@ export function CodeActivity({ activity, onComplete, onFailedCheck }: ActivityPr
             Console
           </h2>
           <pre role="log" aria-live="polite" className="mt-1 min-h-24 overflow-x-auto rounded-xl bg-[#0f2a1c] p-4 font-mono text-sm text-white">
-            {busy === "run" && output.length === 0 && "Running…"}
+            {busy === "run" && output.length === 0 && (
+              <span className="text-[#c8e6d4]">
+                <Loading inline label="Running" />
+              </span>
+            )}
             {output.map((o, i) => (
               <span key={i} className={cx("block", o.stream === "stderr" && "text-[#ffb4b4]", o.stream === "info" && "text-[#c8e6d4]")}>
                 {o.text}
