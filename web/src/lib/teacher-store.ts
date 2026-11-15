@@ -40,6 +40,8 @@ interface ClassRow {
   course_id: string;
   assigned_module_ids: string[];
   created_at: string;
+  school_id: string | null;
+  teacher_id: string;
   roster_students: StudentRow[];
 }
 
@@ -74,7 +76,7 @@ export async function fetchTeacherData(): Promise<TeacherData> {
   const { data, error } = await supabaseBrowser()
     .from("classes")
     .select(
-      "id, name, school, teacher_name, code, course_id, assigned_module_ids, created_at, " +
+      "id, name, school, teacher_name, code, course_id, assigned_module_ids, created_at, school_id, teacher_id, " +
         "roster_students(id, first_name, last_initial, picture_code, last_active_at, streak_days, " +
         "activity_results(activity_id, completed_at, score, attempts, seconds_on_task, response), " +
         "failed_checks(activity_id, count))",
@@ -95,6 +97,8 @@ export async function fetchTeacherData(): Promise<TeacherData> {
       courseId: c.course_id,
       assignedModuleIds: c.assigned_module_ids,
       createdAt: c.created_at,
+      schoolId: c.school_id,
+      teacherId: c.teacher_id,
       roster: c.roster_students.map((s) => ({
         id: s.id,
         firstName: s.first_name,
