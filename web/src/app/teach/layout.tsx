@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BookOpen, ChevronDown, FlaskConical, LayoutDashboard, LogOut, PlusCircle, School, Users } from "lucide-react";
+import { BarChart3, BookOpen, ChevronDown, FlaskConical, LayoutDashboard, LogOut, PlusCircle, School, Sparkles, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell, type NavItem } from "@/components/app-shell";
@@ -13,6 +13,7 @@ const NAV: NavItem[] = [
   { href: "/teach", label: "Overview", Icon: LayoutDashboard, prefix: false },
   { href: "/teach/insights", label: "Insights", Icon: BarChart3 },
   { href: "/teach/roster", label: "Roster", Icon: Users },
+  { href: "/teach/assistant", label: "Assistant", Icon: Sparkles },
   { href: "/teach/new", label: "New class", Icon: PlusCircle },
   { href: "/curriculum", label: "Curriculum", Icon: BookOpen },
 ];
