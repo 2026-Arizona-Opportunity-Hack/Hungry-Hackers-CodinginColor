@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Info, LogIn } from "lucide-react";
 import { Brackets, Button, Logo } from "@/components/ui";
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-accounts";
-import { asRole, homeFor, ROLE_LABELS, safeNextPath, type Role } from "@/lib/roles";
-import { supabaseBrowser } from "@/lib/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+import { asRole, safeNextPath } from "@/lib/roles";
+import { supabaseBrowserFor } from "@/lib/supabase/client";
 
 // Public on purpose: a teacher who only sees the sample class, and a reviewer
 // who only sees the curriculum, and a CIC admin with full powers for the demo.
@@ -31,12 +32,8 @@ const VARIANTS = {
 export default function LoginPage() {
   const router = useRouter();
   const [variant, setVariant] = useState<keyof typeof VARIANTS>("teacher");
-  const [wrongRole, setWrongRole] = useState<Role | null>(null);
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wrong = params.get("wrong");
-    setWrongRole(wrong === "teacher" || wrong === "admin" || wrong === "reviewer" ? wrong : null);
-    const next = params.get("next") ?? "";
+    const next = new URLSearchParams(window.location.search).get("next") ?? "";
     setVariant(next.startsWith("/admin") ? "admin" : next.startsWith("/review") ? "reviewer" : "teacher");
   }, []);
   const v = VARIANTS[variant];
@@ -54,23 +51,28 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setBusy(true);
-    const { error } = await supabaseBrowser().auth.signInWithPassword({
-      email: creds.email.trim(),
-      password: creds.password,
+    // Sign in with a throwaway client first (it never refreshes tokens or stores anything), find out
+    // which role this account has, then keep the session under THAT role's own login cookie. That is
+    // what lets a teacher, an admin and a reviewer be signed in side by side in one browser.
+    const probe = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    if (error) {
+    const { data, error } = await probe.auth.signInWithPassword({ email: creds.email.trim(), password: creds.password });
+    if (error || !data.session) {
       setBusy(false);
       setError("That email and password don't match. Check them and try again.");
       return;
     }
-    // Send each role to its own area (teacher, CIC admin or reviewer).
-    const db = supabaseBrowser();
-    const {
-      data: { user },
-    } = await db.auth.getUser();
-    const profile = user ? await db.from("profiles").select("role").eq("id", user.id).maybeSingle() : null;
+    const profile = await probe.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+    const role = asRole(profile.data?.role);
+    const saved = await supabaseBrowserFor(role).auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
+    if (saved.error) {
+      setBusy(false);
+      setError("We couldn't start your session. Please try again.");
+      return;
+    }
     const next = new URLSearchParams(window.location.search).get("next");
-    router.replace(safeNextPath(next, asRole(profile?.data?.role)));
+    router.replace(safeNextPath(next, role));
     router.refresh();
   }
 
@@ -85,19 +87,6 @@ export default function LoginPage() {
             {v.title}
           </h1>
           <p className="mt-1 text-center text-cic-muted">{v.blurb}</p>
-
-          {wrongRole && (
-            <div role="alert" className="mt-5 rounded-xl bg-cic-warn-bg p-3 text-sm text-cic-warn">
-              <p className="font-bold">You&apos;re signed in as a {ROLE_LABELS[wrongRole]}, and that page is for a different role.</p>
-              <p className="mt-1">
-                This browser holds one login at a time, so signing in as someone else in another tab or window replaces it. Sign in below with the right account, or{" "}
-                <Link href={homeFor(wrongRole)} className="font-bold underline">
-                  continue as {ROLE_LABELS[wrongRole]}
-                </Link>
-                . To use two accounts side by side, use a private window for the second one.
-              </p>
-            </div>
-          )}
 
           <form onSubmit={signIn} className="mt-6" noValidate>
             <label htmlFor="email" className="block font-bold">
@@ -166,7 +155,7 @@ export default function LoginPage() {
                     disabled={busy}
                     onClick={(e) => signIn(e, { email: t.email, password: t.password })}
                   >
-                    Sign in as {t.label.toLowerCase()}
+                    Sign in as {t.id === "admin" ? t.label : t.label.toLowerCase()}
                   </Button>
                 </li>
               ))}

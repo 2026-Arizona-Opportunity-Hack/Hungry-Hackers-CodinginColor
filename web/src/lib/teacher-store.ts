@@ -112,5 +112,7 @@ export async function addStudents(classId: string, students: RosterStudent[]) {
 }
 
 export async function signOutTeacher() {
-  await supabaseBrowser().auth.signOut();
+  // scope "local": end only THIS browser's login. The default would revoke every session of the
+  // account, and demo accounts are shared by several people.
+  await supabaseBrowser().auth.signOut({ scope: "local" });
 }

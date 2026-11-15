@@ -68,6 +68,8 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 4. **Create and publish curriculum** (`/admin/curriculum`): a form-based editor for modules (slides or video, quick check, worksheet, exit question, warm-up and wrap-up quizzes). Edits stay in a private draft until **Publish**; publishing validates the content and can add new modules to existing classes. Python exercises stay developer-edited on purpose.
 5. **Read API for CIC's own dashboard**: `GET /api/v1/cohorts`, protected by `CIC_DASHBOARD_API_KEY`. See [docs/API.md](docs/API.md).
 
+**Separate logins per role:** a teacher, a CIC admin and a reviewer can all be signed in at the same time in one browser. Each role keeps its own login cookie (`cic-auth-teacher`, `cic-auth-admin`, `cic-auth-reviewer`, see `web/src/lib/auth-areas.ts`), so signing in as one never replaces another and signing out only ends that one. Admins view classes at `/admin/classes/...`; `/teach` is the teacher's own area.
+
 **Who can sign in:** students use a class code (no accounts). Teachers, CIC admins and reviewers sign in with email + password. Roles live in `public.profiles.role` and are only ever set by the server or the seed script, never by users. In the Supabase dashboard (Authentication → Sign In / Providers) turn **off** "Allow new users to sign up" so only admins can create accounts.
 
 Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Students join and save progress through server routes (`/api/join/*`, `/api/progress`) with a signed-in cookie. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).

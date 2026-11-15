@@ -1,13 +1,12 @@
 "use client";
 
 import { Building2, Download, GraduationCap, LineChart, Plus, TrendingUp, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemo } from "react";
 import { cohortsCsv, rollup, studentsCsv, type ClassSummary } from "@/lib/admin-analytics";
 import { pct, signedPct } from "@/lib/analytics";
 import { Button, Card, EmptyState, KpiCard, LinkButton, Loading, PageTitle, ProgressBar } from "@/components/ui";
 import { getCourse } from "@/lib/repo";
-import { selectClass } from "@/lib/use-teacher";
 import { useAdmin } from "@/lib/use-admin";
 
 function download(filename: string, text: string) {
@@ -20,7 +19,6 @@ function download(filename: string, text: string) {
 }
 
 export default function AdminOverview() {
-  const router = useRouter();
   const { data, summaries, error, loadedAt } = useAdmin();
 
   const { rows, bySchool, all } = useMemo(() => {
@@ -165,7 +163,9 @@ export default function AdminOverview() {
             {rows.map(({ school, teacher, summary: s }, i) => (
               <tr key={s.cls.id} className={i % 2 ? "bg-cic-tint" : "bg-white"}>
                 <th scope="row" className="p-3 font-bold">
-                  {s.cls.name}
+                  <Link href={`/admin/classes/${s.cls.id}`} className="text-cic-dark underline underline-offset-2 hover:text-cic-darker">
+                    {s.cls.name}
+                  </Link>
                   <span className="block text-sm font-normal text-cic-muted">
                     {school} · code {s.cls.code}
                   </span>
@@ -185,16 +185,13 @@ export default function AdminOverview() {
                 <td className="p-3 font-bold">{signedPct(s.gain)}</td>
                 <td className="p-3">{s.stuck}</td>
                 <td className="p-3">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      selectClass(s.cls.id);
-                      router.push("/teach");
-                    }}
+                  <Link
+                    href={`/admin/classes/${s.cls.id}`}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border-2 border-cic-line bg-white px-4 font-bold text-cic-dark shadow-slab-gray hover:bg-cic-tint"
                   >
                     <GraduationCap aria-hidden className="size-4" /> Open
                     <span className="sr-only"> {s.cls.name}</span>
-                  </Button>
+                  </Link>
                 </td>
               </tr>
             ))}
@@ -206,7 +203,7 @@ export default function AdminOverview() {
       </p>
       <Card className="mt-6 print:hidden">
         <p className="text-sm text-cic-muted">
-          Open any cohort to see its roster, insights and picture codes exactly as its teacher does.
+          Open any cohort to see every student&apos;s status, progress and learning gain.
         </p>
       </Card>
     </div>
