@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { resolveUniqueName } from "./avatar/name";
 import { introAiCourse } from "./curriculum/intro-ai";
 import { supabaseBrowserFor } from "./supabase/client";
 import { demoClass, demoProgress } from "./demo-data";
@@ -228,7 +229,8 @@ export function recordResult(classId: string, studentId: string, result: Activit
   const p = getStudentProgress(classId, studentId);
   const today = new Date().toDateString();
   const lastDay = p.lastActiveAt ? new Date(p.lastActiveAt).toDateString() : null;
-  const streakDays = lastDay === today ? Math.max(1, p.streakDays) : p.streakDays + 1;
+  const newDay = lastDay !== today;
+  const streakDays = newDay ? p.streakDays + 1 : Math.max(1, p.streakDays);
   write(keyProgress(classId, studentId), {
     ...p,
     results: { ...p.results, [result.activityId]: result },
@@ -237,6 +239,8 @@ export function recordResult(classId: string, studentId: string, result: Activit
     lastActiveAt: new Date().toISOString(),
     streakDays,
   } satisfies StudentProgress);
+  // First activity on a new active day earns a +5 streak bonus (idempotent per day).
+  if (newDay) awardXp(classId, studentId, `streak:${today}`, 5);
   if (isServerClass(classId)) {
     sendProgress({
       type: "result",
@@ -288,6 +292,98 @@ export function recordFailedCheck(classId: string, studentId: string, activityId
 
 export function resetStudentProgress(classId: string, studentId: string) {
   remove(keyProgress(classId, studentId));
+}
+
+// ---------- avatar + bonus XP ----------
+
+/**
+ * Evolving robot companion. Demo-only, stored in this browser like the rest
+ * of demo data. No new personal data: the robot's name is picked from
+ * generated options only, never free text.
+ */
+export interface XpAward {
+  /** Idempotency key, e.g. "m2:code:first-try". Awarded at most once. */
+  key: string;
+  amount: number;
+  awardedAt: string;
+}
+
+export interface AvatarProfile {
+  name: string;
+  color: string;
+  backdrop: string;
+  pet: string;
+  /** Highest level whose celebration modal has been shown. */
+  lastSeenLevel: number;
+  awards: XpAward[];
+}
+
+const keyAvatar = (classId: string, studentId: string) => `cic.avatar.v1.${classId}.${studentId}`;
+
+const DEFAULT_AVATAR: Omit<AvatarProfile, "name"> = {
+  color: "mint",
+  backdrop: "meadow",
+  pet: "none",
+  lastSeenLevel: 1,
+  awards: [],
+};
+
+/** Total bonus XP from idempotent awards (base 10/activity XP is derived elsewhere). */
+export function bonusXpFor(profile: AvatarProfile): number {
+  return profile.awards.reduce((n, a) => n + a.amount, 0);
+}
+
+export function getAvatarProfile(classId: string, studentId: string, rosterIds: string[]): AvatarProfile {
+  const found = read<AvatarProfile | null>(keyAvatar(classId, studentId), null);
+  if (found?.name) {
+    return {
+      ...DEFAULT_AVATAR,
+      ...found,
+      lastSeenLevel: Math.max(1, found.lastSeenLevel),
+      awards: found.awards ?? [],
+    };
+  }
+  // Deterministic default: first option not taken by a classmate, so every
+  // student starts with a unique name even before opening the avatar page.
+  const taken = new Set<string>();
+  for (const id of rosterIds) {
+    if (id === studentId) continue;
+    const other = read<AvatarProfile | null>(keyAvatar(classId, id), null);
+    if (other?.name) taken.add(other.name);
+  }
+  return { ...DEFAULT_AVATAR, name: resolveUniqueName(studentId, taken) };
+}
+
+export function updateAvatarProfile(classId: string, studentId: string, patch: Partial<AvatarProfile>) {
+  const rosterIds: string[] = [];
+  const current = getAvatarProfile(classId, studentId, rosterIds);
+  write(keyAvatar(classId, studentId), { ...current, ...patch, awards: patch.awards ?? current.awards });
+}
+
+/**
+ * Idempotent bonus-XP award. Same key twice = recorded once, so double
+ * submits and redo replays can never inflate XP.
+ */
+export function awardXp(classId: string, studentId: string, key: string, amount: number): boolean {
+  const rosterIds: string[] = [];
+  const p = getAvatarProfile(classId, studentId, rosterIds);
+  if (p.awards.some((a) => a.key === key)) return false;
+  write(keyAvatar(classId, studentId), {
+    ...p,
+    awards: [...p.awards, { key, amount, awardedAt: new Date().toISOString() } satisfies XpAward],
+  });
+  return true;
+}
+
+export function markLevelSeen(classId: string, studentId: string, level: number) {
+  const p = getAvatarProfile(classId, studentId, []);
+  if (level > p.lastSeenLevel) updateAvatarProfile(classId, studentId, { lastSeenLevel: level });
+}
+
+/** Demo support: reset the avatar profile (and optionally gift +50 XP). */
+export function resetAvatar(classId: string, studentId: string, grantBonus = false) {
+  remove(keyAvatar(classId, studentId));
+  if (grantBonus) awardXp(classId, studentId, `demo:boost:${Date.now()}`, 50);
 }
 
 // ---------- student session (no accounts) ----------

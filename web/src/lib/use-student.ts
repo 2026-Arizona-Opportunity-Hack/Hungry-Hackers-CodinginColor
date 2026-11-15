@@ -1,7 +1,7 @@
 "use client";
 
 import { assignedModules } from "./analytics";
-import { getClass, getCourse, getSession, getStudentProgress, useStore } from "./repo";
+import { bonusXpFor, getAvatarProfile, getClass, getCourse, getSession, getStudentProgress, useStore } from "./repo";
 
 /** Everything a student screen needs. `undefined` while mounting, `null` if not joined. */
 export function useStudent() {
@@ -14,8 +14,13 @@ export function useStudent() {
     if (!cls || !student || !course) return null;
     const modules = assignedModules(course, cls);
     const progress = getStudentProgress(cls.id, student.id);
-    const xp = Object.values(progress.results).length * 10;
-    return { session, cls, student, course, modules, progress, xp };
+    // Base XP is untouched: 10 per finished activity. Bonus XP (first-try,
+    // module completion, streak days) comes from idempotent avatar awards.
+    const baseXp = Object.values(progress.results).length * 10;
+    const avatar = getAvatarProfile(cls.id, student.id, cls.roster.map((s) => s.id));
+    const bonusXp = bonusXpFor(avatar);
+    const xp = baseXp + bonusXp;
+    return { session, cls, student, course, modules, progress, baseXp, bonusXp, avatar, xp };
   });
 }
 

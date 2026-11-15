@@ -4,10 +4,54 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Flame, Map, PartyPopper, Star, Users } from "lucide-react";
 import { Card, HeroPanel, LinkButton, Loading, Minutes } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
+import { AvatarStage, NextTeaser, XpPopup, useAvatar } from "@/components/avatar";
+import { SHOP_PETS, STAGES } from "@/lib/avatar/config";
 import { courseProgress, moduleComplete, moduleDoneCount, nextStep, skippedActivities } from "@/lib/analytics";
 import { getClassProgress } from "@/lib/repo";
 import { STAGE_LABELS } from "@/lib/types";
 import { useStudent } from "@/lib/use-student";
+
+function EvolutionJourneyCard() {
+  const { profile, level, xp, xpNeeded, justEarned } = useAvatar();
+  const stage = STAGES[level - 1];
+  const petEmoji = SHOP_PETS.find((p) => p.id === profile.pet)?.emoji ?? "";
+  return (
+    <section aria-labelledby="evolution" className="mt-8">
+      <h2 id="evolution" className="font-display text-2xl text-cic-dark">
+        My evolution journey
+      </h2>
+      <Card className="mt-4 flex flex-wrap items-center gap-4">
+        <div className="relative">
+          <AvatarStage
+            level={level}
+            colorId={profile.color}
+            backdropId={profile.backdrop}
+            petId={profile.pet}
+            petEmoji={petEmoji}
+            size={140}
+            priority
+          />
+          <XpPopup amount={justEarned.amount} bumpKey={justEarned.bumpKey} />
+        </div>
+        <div className="min-w-52 flex-1">
+          <p className="font-display text-2xl">
+            {profile.name} · <span className="text-cic-dark">Lv {level}</span>
+          </p>
+          <p className="text-sm font-bold text-cic-muted">
+            {stage.title} · {xp} XP{xpNeeded > 0 ? ` · ${xpNeeded} XP to next stage` : " · fully evolved!"}
+          </p>
+          <p aria-live="polite" className="mt-1 text-sm italic">
+            “{stage.speech.replace("{name}", profile.name)}”
+          </p>
+          <NextTeaser stage={stage} className="mt-1" />
+          <LinkButton href="/learn/avatar" variant="secondary" className="mt-3">
+            Open my robot <ArrowRight aria-hidden className="size-5" />
+          </LinkButton>
+        </div>
+      </Card>
+    </section>
+  );
+}
 
 export default function StudentHome() {
   const ctx = useStudent();
@@ -114,6 +158,8 @@ export default function StudentHome() {
           ))}
         </ul>
       </HeroPanel>
+
+      <EvolutionJourneyCard />
 
       {next && (
         <section aria-labelledby="coming" className="mt-8">

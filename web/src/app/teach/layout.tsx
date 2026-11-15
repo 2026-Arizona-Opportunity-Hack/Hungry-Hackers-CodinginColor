@@ -4,6 +4,7 @@ import { BarChart3, BookOpen, ChevronDown, FlaskConical, LayoutDashboard, LogOut
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell, type NavItem } from "@/components/app-shell";
+import { CodyHelper } from "@/components/cody-helper";
 import { Button, LinkButton, Loading } from "@/components/ui";
 import { useCurriculumReady } from "@/lib/repo";
 import { isDemoTeacher, signOutTeacher } from "@/lib/teacher-store";
@@ -89,6 +90,8 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
         </div>
       )}
       {children}
+      {/* Cody persists across /teach pages (not /curriculum, which has its own layout). */}
+      {path !== "/curriculum" && <CodyHelper />}
     </AppShell>
   );
 }

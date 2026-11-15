@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { RosterImport } from "@/components/roster-import";
 import { LoadProblem, NoClasses } from "@/components/teacher-states";
 import { Button, Card, Loading, PageTitle, ProgressBar, StatusBadge } from "@/components/ui";
+import { LevelChip } from "@/components/avatar";
+import { levelForXp } from "@/lib/avatar/xp";
 import { courseProgress, signedPct, studentGain, studentStatus, type StudentStatus } from "@/lib/analytics";
 import type { RosterParseResult } from "@/lib/csv";
 import { pictureName } from "@/lib/picture-codes";
@@ -31,12 +33,19 @@ export default function RosterPage() {
   const rows = useMemo(() => {
     if (!ctx) return [];
     return ctx.cls.roster
-      .map((s) => ({
-        s,
-        st: studentStatus(ctx.progress[s.id], ctx.modules),
-        done: courseProgress(ctx.progress[s.id], ctx.modules),
-        gain: studentGain(ctx.progress[s.id], ctx.modules).gain,
-      }))
+      .map((s) => {
+        const p = ctx.progress[s.id];
+        // Teacher view never sees the device-local avatar store, so level is
+        // estimated from base XP (10 per finished activity) only.
+        const xp = Object.keys(p?.results ?? {}).length * 10;
+        return {
+          s,
+          st: studentStatus(p, ctx.modules),
+          done: courseProgress(p, ctx.modules),
+          gain: studentGain(p, ctx.modules).gain,
+          xp,
+        };
+      })
       .sort((a, b) => a.s.firstName.localeCompare(b.s.firstName));
   }, [ctx]);
 
@@ -130,10 +139,11 @@ export default function RosterPage() {
               <th scope="col" className="p-3">Status</th>
               <th scope="col" className="p-3">Progress</th>
               <th scope="col" className="p-3">Learning gain</th>
+              <th scope="col" className="p-3">Robot Lv</th>
             </tr>
           </thead>
           <tbody>
-            {shown.map(({ s, st, done, gain }, i) => (
+            {shown.map(({ s, st, done, gain, xp }, i) => (
               <tr key={s.id} className={i % 2 ? "bg-cic-tint" : "bg-white"}>
                 <th scope="row" className="p-3 font-bold">
                   {s.firstName} {s.lastInitial}.
@@ -153,6 +163,10 @@ export default function RosterPage() {
                   <ProgressBar className="mt-1 max-w-32" value={done} label={`${s.firstName}'s progress`} />
                 </td>
                 <td className="p-3 font-bold">{signedPct(gain)}</td>
+                <td className="p-3">
+                  <LevelChip level={levelForXp(xp)} />
+                  <span className="sr-only">{xp} XP</span>
+                </td>
               </tr>
             ))}
             {shown.length === 0 && (

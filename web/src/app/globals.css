@@ -43,6 +43,8 @@
   --animate-shake: shake 380ms ease-in-out both;
   --animate-grow: grow 700ms var(--ease-out-soft) both;
   --animate-grow-up: grow-up 700ms var(--ease-out-soft) both;
+  --animate-avatar-float: avatar-float 3600ms ease-in-out infinite;
+  --animate-avatar-bob: avatar-bob 2400ms ease-in-out infinite;
   --animate-bracket-bounce: bracket-bounce 900ms var(--ease-out-soft) infinite;
   --animate-dot-bounce: dot-bounce 1200ms ease-in-out infinite;
 
@@ -69,6 +71,15 @@
   @keyframes grow-up {
     from { transform: scaleY(0); }
     to { transform: scaleY(1); }
+  }
+  /* Companion idle motion: transform/opacity only, GPU-friendly. */
+  @keyframes avatar-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+  @keyframes avatar-bob {
+    0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+    50% { transform: translateY(-3px) rotate(1.2deg); }
   }
   /* Brand loader: the two code-tag brackets hop in alternation. */
   @keyframes bracket-bounce {

@@ -10,8 +10,11 @@ import { CodeActivity } from "@/components/code-activity";
 import { Confetti } from "@/components/confetti";
 import { Brackets, Button, Card, LinkButton, Loading, cx } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
+import { Avatar, AvatarStage, NextTeaser, XpPopup, XpTag, useAvatar } from "@/components/avatar";
+import { LessonCompanion } from "@/components/avatar/lesson-companion";
+import { SHOP_PETS, STAGES } from "@/lib/avatar/config";
 import { isDone, isSkipped, moduleGain, moduleUnlocked, pct, signedPct, skippedActivities } from "@/lib/analytics";
-import { recordFailedCheck, recordResult, skipActivity, unskipActivity } from "@/lib/repo";
+import { awardXp, recordFailedCheck, recordResult, skipActivity, unskipActivity } from "@/lib/repo";
 import { STAGE_LABELS, type Activity } from "@/lib/types";
 import { useStudent } from "@/lib/use-student";
 
@@ -126,8 +129,26 @@ export default function LessonPlayer() {
     );
   }
 
+  // XP bonus breakdown for the module-complete card (reset each module visit).
+  const [xpBreakdown, setXpBreakdown] = useState<{ label: string; amount: number }[]>([]);
+  void useState<{ amount: number; key: number }>({ amount: 0, key: 0 })[0];
+  const avatar = useAvatarSafe();
+  const awardKey = useRef(0);
+
+  function grantBonus(key: string, amount: number, label: string, moduleId: string, moduleNumber: number) {
+    const ok = awardXp(cls.id, student.id, key, amount);
+    if (ok) {
+      awardKey.current += 1;
+      setXpBreakdown((b) => (b.some((x) => x.label === label) ? b : [...b, { label, amount }]));
+      avatar?.refresh();
+    }
+    void moduleId;
+    void moduleNumber;
+    return ok;
+  }
+
   function complete(c: Completion) {
-    if (!current) return;
+    if (!current || !mod) return;
     recordResult(cls.id, student.id, {
       activityId: current.id,
       completedAt: new Date().toISOString(),
@@ -136,7 +157,19 @@ export default function LessonPlayer() {
       secondsOnTask: timer.read(),
       response: c.response,
     });
-    if (current.kind === "posttest") setJustFinished(true);
+    // Bonuses (idempotent — safe on resubmits and redos):
+    // +5 check first-try, +10 code tests first-try, +20 module wrap-up.
+    const firstTry = c.attempts === 1;
+    if (current.kind === "check" && c.score === 1 && firstTry) {
+      grantBonus(`${mod.id}:${current.id}:first-try`, 5, "First-try check", mod.id, mod.number);
+    }
+    if (current.kind === "code" && c.score === 1 && firstTry) {
+      grantBonus(`${mod.id}:${current.id}:first-try`, 10, "Code tests passed first try", mod.id, mod.number);
+    }
+    if (current.kind === "posttest") {
+      grantBonus(`${mod.id}:complete`, 20, `Module ${mod.number} complete`, mod.id, mod.number);
+      setJustFinished(true);
+    }
     window.scrollTo({ top: 0 });
   }
 
@@ -374,14 +407,14 @@ export default function LessonPlayer() {
         <section className="relative mt-6 animate-rise overflow-hidden rounded-[24px] bg-cic-dark p-6 text-white shadow-slab md:p-10">
           {justFinished && <Confetti />}
           <Brackets className="pointer-events-none absolute -right-12 -bottom-10 w-80 text-cic-green opacity-40" />
-          <div role="status" className="relative text-center">
-            <PartyPopper aria-hidden className="mx-auto size-14 animate-pop" />
-            <h1 className="mt-3 font-display text-3xl leading-tight md:text-5xl">
-              {justFinished ? "Congratulations!" : `You've finished Module ${mod.number}`}
-            </h1>
-            <p className="mx-auto mt-2 max-w-prose text-lg text-cic-tint">
-              {justFinished ? `You finished Module ${mod.number}: ${mod.title}. ` : ""}+{mod.activities.length * 10} XP earned.
-            </p>
+          <ModuleCompleteCard
+            modNumber={mod.number}
+            modTitle={mod.title}
+            activityCount={mod.activities.length}
+            justFinished={justFinished}
+            breakdown={xpBreakdown}
+          />
+          <div role="status" className="relative mt-2 text-center">
             <p className="mt-1 text-cic-tint">Want to look back? Tap any step above to review it.</p>
           </div>
           {gain.gain !== null && (
@@ -418,6 +451,93 @@ export default function LessonPlayer() {
           </div>
         </section>
       )}
+      <LessonCompanion moduleNumber={mod.number} />
     </div>
   );
+}
+
+/** Module-complete card: robot, XP breakdown, leveled-up message, evolution hint. */
+function ModuleCompleteCard({
+  modNumber,
+  modTitle,
+  activityCount,
+  justFinished,
+  breakdown,
+}: {
+  modNumber: number;
+  modTitle: string;
+  activityCount: number;
+  justFinished: boolean;
+  breakdown: { label: string; amount: number }[];
+}) {
+  let avatar: ReturnType<typeof useAvatar> | null = null;
+  try {
+    avatar = useAvatar();
+  } catch {
+    avatar = null;
+  }
+  const bonus = breakdown.reduce((n, b) => n + b.amount, 0);
+  const stage = avatar ? STAGES[avatar.level - 1] : STAGES[0];
+  const petEmoji = avatar ? (SHOP_PETS.find((p) => p.id === avatar.profile.pet)?.emoji ?? "") : "";
+  const grown = justFinished && breakdown.some((b) => b.label.includes("Module"));
+
+  return (
+    <div role="status" className="relative text-center">
+      <div className="relative mx-auto w-fit">
+        <PartyPopper aria-hidden className="mx-auto size-14 animate-pop" />
+        {avatar && <XpPopup amount={bonus} bumpKey={breakdown.length} />}
+      </div>
+      <h1 className="mt-3 font-display text-3xl leading-tight md:text-5xl">
+        {justFinished ? "Congratulations!" : `You've finished Module ${modNumber}`}
+      </h1>
+      <p className="mx-auto mt-2 max-w-prose text-lg text-cic-tint">
+        {justFinished ? `You finished Module ${modNumber}: ${modTitle}. ` : ""}+{activityCount * 10} XP
+        {bonus > 0 ? ` + ${bonus} bonus` : ""} earned.
+      </p>
+      {breakdown.length > 0 && (
+        <ul aria-label="Bonus XP breakdown" className="mx-auto mt-3 flex max-w-xl flex-wrap justify-center gap-2">
+          {breakdown.map((b) => (
+            <li key={b.label} className="rounded-full bg-white/15 px-3 py-1 text-sm font-bold">
+              {b.label} <XpTag amount={b.amount} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {avatar && (
+        <div className="mx-auto mt-5 flex max-w-xl flex-wrap items-center justify-center gap-4 rounded-2xl bg-white p-4 text-left text-black shadow-slab sm:flex-nowrap">
+          {grown ? (
+            <AvatarStage
+              level={avatar.level}
+              colorId={avatar.profile.color}
+              backdropId={avatar.profile.backdrop}
+              petId={avatar.profile.pet}
+              petEmoji={petEmoji}
+              size={110}
+            />
+          ) : (
+            <Avatar level={avatar.level} size={110} className="h-28 w-28 shrink-0" />
+          )}
+          <div className="min-w-48 flex-1">
+            <p className="font-black text-cic-darker">
+              {grown ? `${avatar.profile.name} leveled up!` : `${avatar.profile.name} cheers you on!`}
+            </p>
+            <p className="mt-0.5 text-sm text-cic-muted">
+              {grown
+                ? `Level ${avatar.level}: ${stage.title}. ${stage.tagline}`
+                : stage.speech.replace("{name}", avatar.profile.name)}
+            </p>
+            <NextTeaser stage={stage} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function useAvatarSafe() {
+  try {
+    return useAvatar();
+  } catch {
+    return null;
+  }
 }
