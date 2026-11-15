@@ -114,7 +114,7 @@ Create `web/.env.local` from `.env.example` with your Supabase URL, publishable 
 
 ## Links
 
-- Live demo:
+- Live demo: https://cic-learn-rouge.vercel.app
 - Demo video:
 - Design / docs: [design decisions](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md) · [game plan](docs/HACKATHON_IDEAS.md)
 
