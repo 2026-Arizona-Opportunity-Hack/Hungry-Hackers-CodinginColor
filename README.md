@@ -57,7 +57,11 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 |---|---|
 | Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉 |
 | Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes |
-| Reviewer | `/curriculum` — read-only catalog, no student data |
+| External reviewer | `/login` → trial reviewer `demo.reviewer@example.com` / `CICreview-2026!` → `/review` (curriculum with answer keys, read-only, no student data) |
+| CIC admin | `/login` → `demo.admin@example.com` → `/admin` (every school and cohort, grant-report CSV, add schools and teacher logins). The password is **not public**: `npm run seed:demo` prints it once, or set `DEMO_ADMIN_PASSWORD` in `web/.env.local` first. |
+| Public catalog | `/curriculum` — short read-only catalog, no sign-in |
+
+**Who can sign in:** students use a class code (no accounts). Teachers, CIC admins and reviewers sign in with email + password. Roles live in `public.profiles.role` and are only ever set by the server or the seed script, never by users. In the Supabase dashboard (Authentication → Sign In / Providers) turn **off** "Allow new users to sign up" so only admins can create accounts.
 
 Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Students join and save progress through server routes (`/api/join/*`, `/api/progress`) with a signed-in cookie. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
 
