@@ -3,7 +3,7 @@
 import { Check, Copy, KeyRound, UserPlus } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button, Card, Loading, PageTitle } from "@/components/ui";
-import { onboard, type OnboardResult } from "@/lib/admin-store";
+import { onboard, OnboardError, type OnboardResult } from "@/lib/admin-store";
 import { useAdmin } from "@/lib/use-admin";
 
 type Mode = "new" | "existing" | "reviewer";
@@ -20,6 +20,10 @@ export default function SchoolsPage() {
   const [problem, setProblem] = useState<string | null>(null);
   const [done, setDone] = useState<{ result: OnboardResult; schoolName: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  // New school: also make the school contact a teacher login (saves retyping).
+  const [contactLogin, setContactLogin] = useState(false);
+  // Set when the email already has an account and the admin must confirm a password reset.
+  const [confirmReset, setConfirmReset] = useState<string | null>(null);
   const doneRef = useRef<HTMLDivElement>(null);
 
   if (error) {
@@ -36,27 +40,37 @@ export default function SchoolsPage() {
   const hasPerson = teacher.name.trim() || teacher.email.trim();
   const personLabel = mode === "reviewer" ? "Reviewer" : "Teacher";
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent, resetExisting = false) {
     e.preventDefault();
     setProblem(null);
+    setConfirmReset(null);
+    // "Also make the contact a teacher": use the contact's name and email as the login.
+    const person = mode === "new" && contactLogin && !hasPerson ? { name: school.contactName, email: school.contactEmail } : teacher;
+    const hasPerson2 = person.name.trim() || person.email.trim();
+    if (mode === "new" && contactLogin && !hasPerson && !(school.contactName.trim() && school.contactEmail.trim())) {
+      return setProblem("To make the contact a teacher, enter both their name and email under School contact.");
+    }
     if (mode === "existing" && !schoolId) return setProblem("Pick a school.");
-    if (mode !== "new" && !(teacher.name.trim() && teacher.email.trim())) return setProblem(`Enter the ${personLabel.toLowerCase()}'s name and email.`);
+    if (mode !== "new" && !(person.name.trim() && person.email.trim())) return setProblem(`Enter the ${personLabel.toLowerCase()}'s name and email.`);
     if (mode === "new" && !school.name.trim()) return setProblem("Enter the school's name.");
-    if (hasPerson && !(teacher.name.trim() && teacher.email.trim())) return setProblem("Enter both a name and an email, or leave both empty.");
+    if (hasPerson2 && !(person.name.trim() && person.email.trim())) return setProblem("Enter both a name and an email, or leave both empty.");
     setBusy(true);
     try {
       const result = await onboard({
         ...(mode === "existing" ? { schoolId } : mode === "new" ? { school } : {}),
-        ...(hasPerson ? { account: { role: mode === "reviewer" ? ("reviewer" as const) : ("teacher" as const), ...teacher } } : {}),
+        ...(hasPerson2 ? { account: { role: mode === "reviewer" ? ("reviewer" as const) : ("teacher" as const), name: person.name, email: person.email } } : {}),
+        ...(resetExisting ? { resetExisting: true } : {}),
       });
       const name = mode === "existing" ? (data!.schools.find((s) => s.id === schoolId)?.name ?? "the school") : mode === "new" ? school.name.trim() : "";
       setDone({ result, schoolName: name });
       setCopied(false);
       setSchool({ name: "", city: "", contactName: "", contactEmail: "" });
       setTeacher({ name: "", email: "" });
+      setContactLogin(false);
       setTimeout(() => doneRef.current?.focus(), 0);
     } catch (err) {
-      setProblem(err instanceof Error ? err.message : "Something went wrong.");
+      if (err instanceof OnboardError && err.code === "exists") setConfirmReset(err.message);
+      else setProblem(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setBusy(false);
     }
@@ -151,6 +165,13 @@ export default function SchoolsPage() {
                     </label>
                     <input id="contact-email" type="email" maxLength={120} value={school.contactEmail} onChange={(e) => setSchool({ ...school, contactEmail: e.target.value })} className={input} />
                   </div>
+                  <label className="flex cursor-pointer items-start gap-3 sm:col-span-2">
+                    <input type="checkbox" checked={contactLogin} onChange={(e) => setContactLogin(e.target.checked)} className="mt-1 size-5 shrink-0 accent-[var(--color-cic-dark)]" />
+                    <span>
+                      <span className="block font-bold">Also make the contact a teacher with a login</span>
+                      <span className="block text-sm text-cic-muted">Uses the contact&apos;s name and email above and creates a temporary password for you to share. Or fill in a different person below.</span>
+                    </span>
+                  </label>
                 </div>
               )}
 
@@ -175,6 +196,15 @@ export default function SchoolsPage() {
                 <p className="mt-2 text-sm text-cic-muted">We create their login with a temporary password and show it to you once. No engineer needed.</p>
               </fieldset>
 
+              {confirmReset && (
+                <div role="alert" className="mt-4 rounded-xl border-2 border-cic-dark bg-white p-3">
+                  <p className="font-bold">{confirmReset}</p>
+                  <p className="mt-1 text-sm text-cic-muted">Their old password stops working. You&apos;ll get a new temporary password to share.</p>
+                  <Button type="button" className="mt-2" disabled={busy} onClick={(e) => submit(e as unknown as React.FormEvent, true)}>
+                    Reset password and continue
+                  </Button>
+                </div>
+              )}
               {problem && (
                 <p role="alert" className="mt-4 rounded-lg bg-cic-danger-bg p-3 font-bold text-cic-danger">
                   {problem}
@@ -191,8 +221,8 @@ export default function SchoolsPage() {
               <p className="flex items-center gap-2 font-bold text-cic-darker">
                 <Check aria-hidden className="size-5" /> {done.result.account
                   ? done.result.account.role === "reviewer"
-                    ? "Reviewer added."
-                    : `Teacher added to ${done.schoolName}.`
+                    ? done.result.reset ? "Reviewer's password was reset." : "Reviewer added."
+                    : done.result.reset ? `Teacher's password was reset and they're on ${done.schoolName || "their school"}.` : `Teacher added to ${done.schoolName}.`
                   : `${done.schoolName} added.`}
               </p>
               {done.result.account && (

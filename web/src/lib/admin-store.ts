@@ -78,9 +78,22 @@ export interface OnboardInput {
   schoolId?: string;
   school?: { name: string; city: string; contactName: string; contactEmail: string };
   account?: { role: "teacher" | "reviewer"; name: string; email: string };
+  /** Set only after the admin confirms: reset an existing teacher/reviewer's password. */
+  resetExisting?: boolean;
+}
+
+/** Thrown by onboard(). code "exists" means the email already has a teacher/reviewer account. */
+export class OnboardError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+  ) {
+    super(message);
+  }
 }
 
 export interface OnboardResult {
+  reset?: boolean;
   schoolId?: string;
   account?: { role: "teacher" | "reviewer"; email: string; tempPassword: string };
 }
@@ -93,7 +106,7 @@ export async function onboard(input: OnboardInput): Promise<OnboardResult> {
     body: JSON.stringify(input),
   });
   const body = (await res.json().catch(() => ({}))) as OnboardResult & { error?: string; message?: string };
-  if (!res.ok) throw new Error(body.message ?? "Something went wrong. Please try again.");
+  if (!res.ok) throw new OnboardError(body.message ?? "Something went wrong. Please try again.", body.error);
   window.dispatchEvent(new Event(ADMIN_DATA_EVENT));
   return body;
 }
