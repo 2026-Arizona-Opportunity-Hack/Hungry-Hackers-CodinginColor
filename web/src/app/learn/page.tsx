@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Flame, Map, PartyPopper, Star, Users } from "lucide-react";
 import { Card, HeroPanel, LinkButton, Loading, Minutes } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
+import { RobotCard } from "@/components/robot-avatar";
 import { courseProgress, moduleComplete, moduleDoneCount, nextStep, skippedActivities } from "@/lib/analytics";
 import { getClassProgress } from "@/lib/repo";
 import { STAGE_LABELS } from "@/lib/types";
@@ -103,6 +104,10 @@ export default function StudentHome() {
             </LinkButton>
           </div>
         )}
+
+        <div className="mt-6 max-w-xl">
+          <RobotCard xp={xp} studentId={student.id} />
+        </div>
 
         <ul className="mt-6 flex flex-wrap gap-3" aria-label="My stats">
           {stats.map(({ Icon, value, label }) => (

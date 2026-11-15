@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { BarChart3, Flame, Home, LogOut, Map, Star } from "lucide-react";
+import { BarChart3, Bot, Flame, Home, LogOut, Map, Star } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { Loading } from "@/components/ui";
+import { RobotBadge } from "@/components/robot-avatar";
 import { clearSession, useCurriculumReady } from "@/lib/repo";
 import { useStudent } from "@/lib/use-student";
 
@@ -12,6 +13,7 @@ const NAV: NavItem[] = [
   { href: "/learn", label: "Home", Icon: Home, prefix: false },
   { href: "/learn/course", label: "Course", Icon: Map },
   { href: "/learn/results", label: "My progress", Icon: BarChart3 },
+  { href: "/learn/avatar", label: "My robot", Icon: Bot },
 ];
 
 export default function LearnLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +41,7 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
             <Star aria-hidden className="size-5 text-cic-dark" />
             <span className="sr-only">Experience points:</span> {ctx.xp} XP
           </span>
+          <RobotBadge xp={ctx.xp} studentId={ctx.student.id} />
           <span className="hidden font-bold md:inline">
             {ctx.student.firstName} {ctx.student.lastInitial}.
           </span>
