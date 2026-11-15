@@ -178,7 +178,10 @@ function emptyProgress(studentId: string): StudentProgress {
 
 export function getStudentProgress(classId: string, studentId: string): StudentProgress {
   const seeded = classId === demoClass.id ? demoProgress()[studentId] : undefined;
-  return read<StudentProgress | null>(keyProgress(classId, studentId), null) ?? seeded ?? emptyProgress(studentId);
+  const found = read<StudentProgress | null>(keyProgress(classId, studentId), null) ?? seeded ?? emptyProgress(studentId);
+  // Progress saved before the skip feature has no skippedIds — normalize here
+  // so no caller has to guard against undefined.
+  return { ...found, skippedIds: found.skippedIds ?? [] };
 }
 
 export function getClassProgress(cls: Classroom): Record<string, StudentProgress> {
