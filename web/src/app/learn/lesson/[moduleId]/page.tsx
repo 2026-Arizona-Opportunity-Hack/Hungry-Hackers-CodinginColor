@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, FastForward, Lock, PartyPopper, RotateCcw, Timer, TrendingUp, Undo2 } from "lucide-react";
+import { ReadingTools } from "@/components/reading-tools";
 import { CheckActivity, ExitActivity, QuizActivity, SlidesActivity, WorksheetActivity, type Completion } from "@/components/activities";
 import { CodeActivity } from "@/components/code-activity";
 import { Confetti } from "@/components/confetti";
@@ -294,6 +295,7 @@ export default function LessonPlayer() {
           <h1 ref={headingRef} tabIndex={-1} className="mb-5 font-display text-2xl text-cic-dark md:text-3xl">
             {reviewing.title}
           </h1>
+          <ReadingTools enabled={reviewing.kind !== "code"}>
           {reviewing.kind === "slides" && (
             <SlidesActivity activity={reviewing} onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview} />
           )}
@@ -320,6 +322,7 @@ export default function LessonPlayer() {
           {reviewing.kind === "exit" && (
             <ExitActivity activity={reviewing} onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview} />
           )}
+          </ReadingTools>
         </div>
       ) : current ? (
         <div key={current.id} className="mt-6 animate-rise">
@@ -345,12 +348,14 @@ export default function LessonPlayer() {
               </Button>
             </div>
           )}
+          <ReadingTools enabled={current.kind !== "code"}>
           {current.kind === "slides" && <SlidesActivity key={current.id} activity={current} onComplete={complete} />}
           {(current.kind === "pretest" || current.kind === "posttest") && <QuizActivity key={current.id} activity={current} onComplete={complete} />}
           {current.kind === "check" && <CheckActivity key={current.id} activity={current} onComplete={complete} onFailedCheck={failed} />}
           {current.kind === "worksheet" && <WorksheetActivity key={current.id} activity={current} onComplete={complete} />}
           {current.kind === "code" && <CodeActivity key={current.id} activity={current} onComplete={complete} onFailedCheck={failed} />}
           {current.kind === "exit" && <ExitActivity key={current.id} activity={current} onComplete={complete} />}
+          </ReadingTools>
           {!isSkipped(progress, current.id) && (
             <div className="mt-6 flex justify-center">
               <Button

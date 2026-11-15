@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Lightbulb, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Flag, Lightbulb, XCircle } from "lucide-react";
+import { ReadableText } from "./reading-tools";
 import { Button, cx } from "./ui";
 import type { Activity, ChoiceQuestion } from "@/lib/types";
 
@@ -34,18 +35,24 @@ export function SlidesActivity({ activity, onComplete }: ActivityProps<"slides">
           slide.divider && "items-center text-center",
         )}
       >
-        <h2 className={cx("font-display leading-tight", slide.divider ? "text-3xl md:text-5xl" : "text-2xl text-cic-dark md:text-3xl")}>{slide.title}</h2>
+        <h2 className={cx("font-display leading-tight", slide.divider ? "text-3xl md:text-5xl" : "text-2xl text-cic-dark md:text-3xl")}>
+          <ReadableText text={slide.title} />
+        </h2>
         {slide.bullets.length > 0 && (
           <ul className={cx("mt-4 space-y-2 text-lg", !slide.divider && "list-disc pl-6")}>
             {slide.bullets.map((b) => (
-              <li key={b}>{b}</li>
+              <li key={b}>
+                <ReadableText text={b} />
+              </li>
             ))}
           </ul>
         )}
         {slide.ourProject && (
           <div className="mt-5 rounded-xl border border-cic-line bg-cic-tint p-4">
             <p className="font-mono text-sm font-bold text-cic-darker">Our project:</p>
-            <p className="mt-1">{slide.ourProject}</p>
+            <p className="mt-1">
+              <ReadableText text={slide.ourProject} />
+            </p>
           </div>
         )}
       </div>
@@ -80,6 +87,8 @@ function QuestionCard({
   disabled,
   reveal,
   markWrong,
+  flagged,
+  onToggleFlag,
 }: {
   q: ChoiceQuestion;
   index: number;
@@ -90,13 +99,39 @@ function QuestionCard({
   reveal?: boolean;
   /** Mark the picked answer as wrong WITHOUT revealing the right one (a hint is shown instead). */
   markWrong?: boolean;
+  /** Warm-up and wrap-up only: the student flagged this question to come back to. */
+  flagged?: boolean;
+  onToggleFlag?: () => void;
 }) {
   const name = useId();
   return (
-    <fieldset className="rounded-[var(--radius-card)] border-2 border-cic-line bg-white p-5 shadow-slab-gray">
+    <fieldset
+      id={`question-${q.id}`}
+      className={cx(
+        "scroll-mt-24 rounded-[var(--radius-card)] border-2 bg-white p-5 shadow-slab-gray",
+        flagged ? "border-cic-warn" : "border-cic-line",
+      )}
+    >
       <legend className="px-1 text-lg font-bold">
-        {index + 1}. {q.prompt}
+        {index + 1}. <ReadableText text={q.prompt} />
       </legend>
+      {onToggleFlag && (
+        <div className="mb-1 flex justify-end">
+          <button
+            type="button"
+            aria-pressed={Boolean(flagged)}
+            onClick={onToggleFlag}
+            className={cx(
+              "inline-flex min-h-11 items-center gap-1.5 rounded-xl border-2 px-3 text-sm font-bold transition-colors",
+              flagged ? "border-cic-warn bg-cic-warn-bg text-cic-warn" : "border-cic-line bg-white text-cic-muted hover:bg-cic-tint",
+            )}
+          >
+            <Flag aria-hidden className={cx("size-4", flagged && "fill-current")} />
+            {flagged ? "Marked for review" : "Mark for review"}
+            <span className="sr-only"> (question {index + 1})</span>
+          </button>
+        </div>
+      )}
       {q.code && <pre translate="no" className="mt-2 overflow-x-auto rounded-xl bg-cic-tint p-4 font-mono">{q.code}</pre>}
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {q.choices.map((c, ci) => {
@@ -136,7 +171,9 @@ function QuestionCard({
               >
                 {"ABCDEF"[ci]}
               </span>
-              <span className="flex-1">{c}</span>
+              <span className="flex-1">
+                <ReadableText text={c} />
+              </span>
               {correct && (
                 <span className="inline-flex items-center gap-1 text-sm font-bold text-cic-darker">
                   <CheckCircle2 aria-hidden className="size-4" /> Correct answer
@@ -169,6 +206,8 @@ export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" |
   const [tries, setTries] = useState<number[]>(() => qs.map(() => 0));
   const [wrongNow, setWrongNow] = useState<boolean[]>(() => qs.map(() => false));
   const [locked, setLocked] = useState<boolean[]>(() => qs.map(() => false));
+  /** "Mark for review" flags. On-screen help only: never saved, and cleared on submit. */
+  const [flagged, setFlagged] = useState<boolean[]>(() => qs.map(() => false));
   const all = answers.every((a) => a !== undefined);
   const firstScore = first ? first.filter((a, i) => a === qs[i].answerIndex).length / qs.length : 0;
   const finished = first !== null && locked.every(Boolean);
@@ -176,6 +215,7 @@ export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" |
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!all) return;
+    setFlagged(qs.map(() => false));
     // Warm-up: no feedback at all. It measures what students knew before the lesson.
     if (isPre) {
       const score = answers.filter((a, i) => a === qs[i].answerIndex).length / qs.length;
@@ -220,6 +260,8 @@ export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" |
               disabled={locked[i]}
               reveal={gaveUp}
               markWrong={wrongNow[i] && !gaveUp}
+              flagged={flagged[i]}
+              onToggleFlag={locked[i] ? undefined : () => setFlagged((f) => f.map((x, j) => (j === i ? !x : x)))}
               onChange={(v) => {
                 setAnswers((a) => a.map((x, j) => (j === i ? v : x)));
                 setWrongNow((w) => w.map((x, j) => (j === i ? false : x)));
@@ -257,11 +299,35 @@ export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" |
           </Button>
         </div>
       ) : (
-        <div className="flex items-center justify-end gap-3">
+        <div className="space-y-3">
+          {flagged.some(Boolean) && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-cic-warn bg-cic-warn-bg p-3 text-sm">
+              <Flag aria-hidden className="size-4 fill-current text-cic-warn" />
+              <span className="font-bold text-cic-darker">Marked for review:</span>
+              {qs.map((q, i) =>
+                flagged[i] ? (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`question-${q.id}`);
+                      el?.scrollIntoView({ block: "start" });
+                      el?.querySelector<HTMLInputElement>("input:not(:disabled)")?.focus({ preventScroll: true });
+                    }}
+                    className="min-h-11 rounded-lg bg-white px-3 font-bold text-cic-darker underline underline-offset-2"
+                  >
+                    Question {i + 1}
+                  </button>
+                ) : null,
+              )}
+            </div>
+          )}
+          <div className="flex items-center justify-end gap-3">
           {!all && <p className="text-sm text-cic-muted">Answer every question to continue.</p>}
           <Button type="submit" disabled={!all}>
             {isPre ? "Submit warm-up" : first ? "Check again" : "Submit answers"} <ArrowRight aria-hidden className="size-5" />
           </Button>
+          </div>
         </div>
       )}
     </form>
@@ -379,7 +445,9 @@ export function WorksheetActivity({ activity, onComplete }: ActivityProps<"works
       }}
       className="space-y-5"
     >
-      <p className="text-lg">{activity.intro}</p>
+      <p className="text-lg">
+        <ReadableText text={activity.intro} />
+      </p>
       {activity.link && (
         <a
           href={activity.link.href}
@@ -396,11 +464,11 @@ export function WorksheetActivity({ activity, onComplete }: ActivityProps<"works
         return (
           <div key={f.id}>
             <label htmlFor={id} className="block font-bold">
-              {i + 1}. {f.label}
+              {i + 1}. <ReadableText text={f.label} />
             </label>
             {f.help && (
               <p id={`${id}-help`} className="text-sm text-cic-muted">
-                {f.help}
+                <ReadableText text={f.help} />
               </p>
             )}
             {f.kind === "long" ? (
@@ -453,7 +521,7 @@ export function ExitActivity({ activity, onComplete }: ActivityProps<"exit">) {
       className="space-y-4"
     >
       <label htmlFor={id} className="block text-xl font-bold">
-        {activity.prompt}
+        <ReadableText text={activity.prompt} />
       </label>
       <textarea
         id={id}
