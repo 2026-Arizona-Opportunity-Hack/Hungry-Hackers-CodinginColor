@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Settings2, X } from "lucide-react";
+import { Languages, Settings2, X } from "lucide-react";
 import { DEFAULT_PREFS, applyPrefs, loadPrefs, savePrefs, type DisplayPrefs, type TextSize, type ThemePref } from "@/lib/display-prefs";
+import { LANGUAGES, isLanguage, setTranslateCookie } from "@/lib/translate";
 import { cx } from "./ui";
 
 const THEMES: { value: ThemePref; label: string }[] = [
@@ -72,9 +73,15 @@ export function DisplaySettings() {
 
   const update = (patch: Partial<DisplayPrefs>) => {
     const next = { ...prefs, ...patch };
+    if (!isLanguage(next.lang)) next.lang = "en";
     setPrefs(next);
     applyPrefs(next);
     savePrefs(next);
+    // The translator takes over the page text, so a language change reloads it.
+    if (next.lang !== prefs.lang) {
+      setTranslateCookie(next.lang);
+      location.reload();
+    }
   };
 
   return (
@@ -102,6 +109,28 @@ export function DisplaySettings() {
               <X aria-hidden className="size-5" />
               <span className="sr-only">Close display settings</span>
             </button>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor={`${panelId}-lang`} className="mb-2 flex items-center gap-2 font-bold">
+              <Languages aria-hidden className="size-5" />
+              Language
+            </label>
+            {/* Language names stay in their own language (translate="no") so people can find theirs. */}
+            <select
+              id={`${panelId}-lang`}
+              translate="no"
+              value={prefs.lang}
+              onChange={(e) => update({ lang: e.target.value })}
+              className="notranslate min-h-12 w-full rounded-xl border-2 border-cic-line bg-white px-3 font-bold text-black"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-sm text-cic-muted">Translates the whole site. The page text is sent to Google Translate once you pick a language other than English.</p>
           </div>
 
           <fieldset className="mb-4">

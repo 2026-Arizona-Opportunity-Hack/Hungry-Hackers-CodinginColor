@@ -13,6 +13,8 @@ export interface DisplayPrefs {
   readableFont: boolean;
   wideSpacing: boolean;
   reduceMotion: boolean;
+  /** Site language (see lib/translate.ts). "en" = no translation. */
+  lang: string;
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
@@ -21,6 +23,7 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   readableFont: false,
   wideSpacing: false,
   reduceMotion: false,
+  lang: "en",
 };
 
 export const PREFS_KEY = "cic-display-prefs";

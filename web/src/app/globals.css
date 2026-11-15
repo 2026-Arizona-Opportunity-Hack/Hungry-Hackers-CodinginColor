@@ -252,3 +252,21 @@ body {
   outline: 3px solid var(--color-cic-dark) !important;
   outline-offset: 2px;
 }
+
+/* Google Translate injects a banner and tooltips we don't want: language is
+   chosen in the Display panel instead. */
+.skiptranslate iframe,
+.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-ORHb-OEVmcd {
+  display: none !important;
+}
+body {
+  top: 0 !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}

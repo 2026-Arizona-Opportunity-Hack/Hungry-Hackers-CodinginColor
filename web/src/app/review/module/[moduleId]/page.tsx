@@ -18,7 +18,7 @@ function Questions({ qs }: { qs: ChoiceQuestion[] }) {
             <span className="rounded-full bg-cic-tint px-2 py-0.5 text-xs font-bold text-cic-darker">{CONCEPT_LABELS[q.concept]}</span>
           </div>
           <p className="mt-1 text-lg font-bold">{q.prompt}</p>
-          {q.code && <pre className="mt-2 overflow-x-auto rounded-xl bg-[#0f2a1c] p-3 text-sm text-[#fff]">{q.code}</pre>}
+          {q.code && <pre translate="no" className="mt-2 overflow-x-auto rounded-xl bg-[#0f2a1c] p-3 text-sm text-[#fff]">{q.code}</pre>}
           <ul className="mt-3 space-y-2">
             {q.choices.map((c, i) => {
               const right = i === q.answerIndex;
@@ -122,12 +122,12 @@ function Detail({ a }: { a: Activity }) {
           </ol>
           <div>
             <p className="font-bold">Starter code</p>
-            <pre className="mt-1 overflow-x-auto rounded-xl bg-[#0f2a1c] p-3 text-sm text-[#fff]">{a.starter}</pre>
+            <pre translate="no" className="mt-1 overflow-x-auto rounded-xl bg-[#0f2a1c] p-3 text-sm text-[#fff]">{a.starter}</pre>
           </div>
           {a.exampleOutput && (
             <div>
               <p className="font-bold">Example output</p>
-              <pre className="mt-1 overflow-x-auto rounded-xl bg-cic-tint p-3 text-sm">{a.exampleOutput}</pre>
+              <pre translate="no" className="mt-1 overflow-x-auto rounded-xl bg-cic-tint p-3 text-sm">{a.exampleOutput}</pre>
             </div>
           )}
           <div>
@@ -135,7 +135,7 @@ function Detail({ a }: { a: Activity }) {
             <ul className="mt-1 list-disc pl-5">
               {a.tests.map((t) => (
                 <li key={t.description}>
-                  {t.description} <code className="rounded bg-cic-tint px-1">{t.expr} == {t.expected}</code>
+                  {t.description} <code translate="no" className="rounded bg-cic-tint px-1">{t.expr} == {t.expected}</code>
                 </li>
               ))}
             </ul>

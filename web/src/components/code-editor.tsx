@@ -104,7 +104,7 @@ export function CodeEditor({
 
   return (
     <div>
-      <div ref={host} />
+      <div ref={host} translate="no" />
       {blocked && (
         <p role="status" className="mt-2 text-sm font-bold text-cic-muted">
           Copy and paste are turned off here. Typing the code yourself is how it sticks!

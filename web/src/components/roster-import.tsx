@@ -64,7 +64,7 @@ export function RosterImport({ seedOffset, onParsed }: { seedOffset: number; onP
           Or upload a class list (CSV)
         </label>
         <p id={`${id}-file-help`} className="text-sm text-cic-muted">
-          A spreadsheet saved as .csv with <code>first_name</code> and <code>last_name</code> columns, or one <code>name</code> column.
+          A spreadsheet saved as .csv with <code translate="no">first_name</code> and <code translate="no">last_name</code> columns, or one <code translate="no">name</code> column.
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <input

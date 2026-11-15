@@ -97,7 +97,7 @@ function QuestionCard({
       <legend className="px-1 text-lg font-bold">
         {index + 1}. {q.prompt}
       </legend>
-      {q.code && <pre className="mt-2 overflow-x-auto rounded-xl bg-cic-tint p-4 font-mono">{q.code}</pre>}
+      {q.code && <pre translate="no" className="mt-2 overflow-x-auto rounded-xl bg-cic-tint p-4 font-mono">{q.code}</pre>}
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {q.choices.map((c, ci) => {
           const checked = value === ci;

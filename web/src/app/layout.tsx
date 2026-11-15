@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Lexend } from "next/font/google";
 import { DisplaySettings } from "@/components/display-settings";
 import { PREFS_SCRIPT } from "@/lib/display-prefs";
+import { PageTranslator } from "@/components/page-translator";
 import { CurriculumLoader } from "@/components/curriculum-loader";
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
         <CurriculumLoader />
         {children}
         <DisplaySettings />
+        <PageTranslator />
       </body>
     </html>
   );
