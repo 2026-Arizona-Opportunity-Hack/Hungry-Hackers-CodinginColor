@@ -82,10 +82,47 @@ export async function POST(request: Request) {
 
   const tempPassword = randomBytes(10).toString("base64url");
   const created = await db.auth.admin.createUser({ email: tEmail, password: tempPassword, email_confirm: true });
-  if (created.error || !created.data.user) {
-    await undoSchool();
+  const accountId = created.data.user?.id ?? null;
+  if (created.error || !accountId) {
     const exists = /already|registered|exists/i.test(created.error?.message ?? "");
-    return fail(exists ? "An account with that email already exists." : "Couldn't create the account.", exists ? 409 : 500);
+    if (!exists) {
+      await undoSchool();
+      return fail("Couldn't create the account.", 500);
+    }
+    // The email already has an account. Never touch an admin's or a self-learner's account.
+    // An existing teacher/reviewer can be given a fresh temporary password and (for
+    // teachers) moved to this school, but only when the admin explicitly confirms
+    // (body.resetExisting), so it can't happen by accident.
+    const existing = await db.from("profiles").select("id, role").ilike("email", tEmail).maybeSingle();
+    const ex = existing.data as { id: string; role: string } | null;
+    await undoSchool();
+    if (!ex) return fail("An account with that email already exists, but it isn't a teacher or reviewer account. Use a different email.", 409);
+    if (ex.role === "admin") return fail("That email belongs to a CIC admin account, which can't be changed here.", 409);
+    if (ex.role !== role) {
+      return fail(
+        ex.role === "learner"
+          ? "That email is already a self-learner account. Use a different email for the teacher."
+          : `That email is already a ${ex.role} account, so it can't also be a ${role}. Use a different email.`,
+        409,
+      );
+    }
+    if (body.resetExisting !== true) {
+      return NextResponse.json(
+        { error: "exists", message: `${tEmail} already has a ${role} account. Reset its password and add it to this school?` },
+        { status: 409 },
+      );
+    }
+    // Confirmed: re-create the school if we had just rolled it back, then reset the password.
+    if (createdSchool) {
+      const again = await db.from("schools").insert(body.school ? { name: text(body.school.name, 80), city: text(body.school.city ?? "", 80), contact_name: text(body.school.contactName ?? "", 80), contact_email: text(body.school.contactEmail ?? "", 120), created_by: user.id } : {}).select("id").single();
+      if (again.error) return fail("Couldn't save the school.", 500);
+      schoolId = again.data.id;
+    }
+    const upd = await db.auth.admin.updateUserById(ex.id, { password: tempPassword, email_confirm: true });
+    if (upd.error) return fail("Couldn't reset that account's password.", 500);
+    const prof2 = await db.from("profiles").update({ display_name: tName, ...(role === "teacher" ? { school_id: schoolId } : {}) }).eq("id", ex.id);
+    if (prof2.error) return fail("Couldn't update the account.", 500);
+    return NextResponse.json({ schoolId, reset: true, account: { role, email: tEmail, tempPassword }, teacher: { email: tEmail, tempPassword } });
   }
 
   // The role is set here, on the server. Never from anything the user can edit.
