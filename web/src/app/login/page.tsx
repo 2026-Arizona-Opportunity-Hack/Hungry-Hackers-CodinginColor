@@ -6,9 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Info, LogIn } from "lucide-react";
 import { Brackets, Button, Logo } from "@/components/ui";
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-accounts";
-import { createClient } from "@supabase/supabase-js";
-import { asRole, safeNextPath } from "@/lib/roles";
-import { supabaseBrowserFor } from "@/lib/supabase/client";
+import { safeNextPath } from "@/lib/roles";
+import { signInWithPassword } from "@/lib/sign-in";
 
 // Public on purpose: a teacher who only sees the sample class, and a reviewer
 // who only sees the curriculum, and a CIC admin with full powers for the demo.
@@ -27,6 +26,7 @@ const VARIANTS = {
     trials: ["admin"],
   },
   reviewer: { title: "Reviewer sign in", blurb: "Read-only access to the full curriculum, answer keys included.", trials: ["reviewer"] },
+  learner: { title: "Welcome back", blurb: "Sign in to pick up your self-paced learning where you left off.", trials: [] as string[] },
 };
 
 export default function LoginPage() {
@@ -34,7 +34,7 @@ export default function LoginPage() {
   const [variant, setVariant] = useState<keyof typeof VARIANTS>("teacher");
   useEffect(() => {
     const next = new URLSearchParams(window.location.search).get("next") ?? "";
-    setVariant(next.startsWith("/admin") ? "admin" : next.startsWith("/review") ? "reviewer" : "teacher");
+    setVariant(next.startsWith("/admin") ? "admin" : next.startsWith("/review") ? "reviewer" : next.startsWith("/learn") ? "learner" : "teacher");
   }, []);
   const v = VARIANTS[variant];
   const [email, setEmail] = useState("");
@@ -51,28 +51,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setBusy(true);
-    // Sign in with a throwaway client first (it never refreshes tokens or stores anything), find out
-    // which role this account has, then keep the session under THAT role's own login cookie. That is
-    // what lets a teacher, an admin and a reviewer be signed in side by side in one browser.
-    const probe = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
-    const { data, error } = await probe.auth.signInWithPassword({ email: creds.email.trim(), password: creds.password });
-    if (error || !data.session) {
+    const result = await signInWithPassword(creds.email, creds.password);
+    if (!result.ok) {
       setBusy(false);
-      setError("That email and password don't match. Check them and try again.");
-      return;
-    }
-    const profile = await probe.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
-    const role = asRole(profile.data?.role);
-    const saved = await supabaseBrowserFor(role).auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
-    if (saved.error) {
-      setBusy(false);
-      setError("We couldn't start your session. Please try again.");
+      setError(result.message);
       return;
     }
     const next = new URLSearchParams(window.location.search).get("next");
-    router.replace(safeNextPath(next, role));
+    router.replace(safeNextPath(next, result.role));
     router.refresh();
   }
 
@@ -161,9 +147,19 @@ export default function LoginPage() {
               ))}
             </ul>
           </section>
-          ) : (
+          ) : variant === "admin" ? (
             <p className="mt-6 rounded-2xl bg-cic-tint p-4 text-sm">
               Admin accounts are created by the CIC team. Use the email and password you were given.
+            </p>
+          ) : null}
+
+          {variant !== "admin" && variant !== "reviewer" && (
+            <p className="mt-6 rounded-2xl border-2 border-cic-line p-4 text-sm">
+              <strong>Learning on your own?</strong> You don&apos;t need a class.{" "}
+              <Link href="/start" className="font-bold text-cic-dark underline">
+                Create a free account
+              </Link>
+              .
             </p>
           )}
 

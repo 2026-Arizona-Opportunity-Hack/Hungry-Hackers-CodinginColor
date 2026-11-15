@@ -22,7 +22,7 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
     if (ctx === null) router.replace("/join");
   }, [ctx, router]);
 
-  if (!ctx) return <Loading label={ctx === null ? "Taking you to join a class…" : "Loading your class…"} />;
+  if (!ctx) return <Loading label={ctx === null ? "Taking you to sign in…" : "Loading your lessons…"} />;
 
   return (
     <AppShell

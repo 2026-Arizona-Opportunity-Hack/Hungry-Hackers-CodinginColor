@@ -77,6 +77,9 @@ export default function Welcome() {
             <Link href="/teach" className="rounded-xl px-3 py-2 text-cic-dark hover:bg-cic-tint">
               For teachers
             </Link>
+            <Link href="/start" className="rounded-xl px-3 py-2 text-cic-dark hover:bg-cic-tint">
+              Learn on your own
+            </Link>
             <Link href="/admin" className="rounded-xl px-3 py-2 text-cic-dark hover:bg-cic-tint">
               Admin
             </Link>
@@ -102,13 +105,16 @@ export default function Welcome() {
                 <LinkButton href="/teach" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
                   <GraduationCap aria-hidden className="size-5" /> I&apos;m a teacher
                 </LinkButton>
+                <LinkButton href="/start" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
+                  <BookOpen aria-hidden className="size-5" /> Learn on my own
+                </LinkButton>
                 <LinkButton href="/admin" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
                   <ShieldCheck aria-hidden className="size-5" /> CIC Admin
                 </LinkButton>
               </div>
               <p className="mt-5 flex items-center gap-2 text-cic-tint">
                 <ShieldCheck aria-hidden className="size-5" />
-                No student accounts or email, just a class code.
+                Joining a class needs no account or email, just a class code.
               </p>
             </div>
             <LessonPreview />

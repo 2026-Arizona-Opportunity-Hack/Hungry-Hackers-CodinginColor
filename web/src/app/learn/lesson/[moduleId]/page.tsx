@@ -112,7 +112,7 @@ export default function LessonPlayer() {
   }
 
   const modIndex = modules.indexOf(mod);
-  if (!moduleUnlocked(progress, modules, modIndex)) {
+  if (!moduleUnlocked(progress, modules, modIndex, cls.selfPaced)) {
     return (
       <Card className="mx-auto max-w-xl text-center">
         <Lock aria-hidden className="mx-auto size-10 text-cic-muted" />

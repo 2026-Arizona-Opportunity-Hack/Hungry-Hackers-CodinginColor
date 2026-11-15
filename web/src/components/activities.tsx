@@ -79,13 +79,17 @@ function QuestionCard({
   onChange,
   disabled,
   reveal,
+  markWrong,
 }: {
   q: ChoiceQuestion;
   index: number;
   value: number | undefined;
   onChange: (v: number) => void;
   disabled?: boolean;
+  /** Show which answer is right (and which pick was wrong). */
   reveal?: boolean;
+  /** Mark the picked answer as wrong WITHOUT revealing the right one (a hint is shown instead). */
+  markWrong?: boolean;
 }) {
   const name = useId();
   return (
@@ -98,7 +102,7 @@ function QuestionCard({
         {q.choices.map((c, ci) => {
           const checked = value === ci;
           const correct = reveal && ci === q.answerIndex;
-          const wrong = reveal && checked && ci !== q.answerIndex;
+          const wrong = (reveal || markWrong) && checked && ci !== q.answerIndex;
           return (
             <label
               key={c}
@@ -153,45 +157,102 @@ function QuestionCard({
 
 // ---------- Pretest / post-test ----------
 
+/** After this many wrong tries on one question, show the right answer so nobody gets stuck. */
+const REVEAL_AFTER = 3;
+
 export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" | "posttest">) {
-  const [answers, setAnswers] = useState<(number | undefined)[]>(() => activity.questions.map(() => undefined));
-  const [submitted, setSubmitted] = useState(false);
+  const qs = activity.questions;
   const isPre = activity.kind === "pretest";
+  const [answers, setAnswers] = useState<(number | undefined)[]>(() => qs.map(() => undefined));
+  /** The answers from the very first submit. They decide the score, whatever happens on retries. */
+  const [first, setFirst] = useState<(number | undefined)[] | null>(null);
+  const [tries, setTries] = useState<number[]>(() => qs.map(() => 0));
+  const [wrongNow, setWrongNow] = useState<boolean[]>(() => qs.map(() => false));
+  const [locked, setLocked] = useState<boolean[]>(() => qs.map(() => false));
   const all = answers.every((a) => a !== undefined);
-  const score = answers.filter((a, i) => a === activity.questions[i].answerIndex).length / activity.questions.length;
+  const firstScore = first ? first.filter((a, i) => a === qs[i].answerIndex).length / qs.length : 0;
+  const finished = first !== null && locked.every(Boolean);
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!all) return;
+    // Warm-up: no feedback at all. It measures what students knew before the lesson.
+    if (isPre) {
+      const score = answers.filter((a, i) => a === qs[i].answerIndex).length / qs.length;
+      return onComplete({ attempts: 1, score, response: answers });
+    }
+    // Wrap-up: a wrong answer gets a hint and a retry, but the FIRST try is what counts.
+    if (!first) setFirst([...answers]);
+    const nextTries = [...tries];
+    const nextWrong = [...wrongNow];
+    const nextLocked = [...locked];
+    qs.forEach((q, i) => {
+      if (locked[i]) return;
+      if (answers[i] === q.answerIndex) {
+        nextLocked[i] = true;
+        nextWrong[i] = false;
+      } else {
+        nextTries[i] += 1;
+        nextWrong[i] = true;
+        if (nextTries[i] >= REVEAL_AFTER) nextLocked[i] = true;
+      }
+    });
+    setTries(nextTries);
+    setWrongNow(nextWrong);
+    setLocked(nextLocked);
+  }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!all) return;
-        if (isPre) onComplete({ attempts: 1, score, response: answers });
-        else setSubmitted(true);
-      }}
-      className="space-y-4"
-    >
+    <form onSubmit={submit} className="space-y-4">
       <p className="rounded-xl bg-cic-tint p-4">
         {isPre
           ? "This warm-up shows what you already know. It's okay to guess — it doesn't count against you."
-          : "Same questions as the warm-up. Let's see how much you've learned!"}
+          : "Same questions as the warm-up. If one isn't right you'll get a hint and can try again — but your first try is what counts."}
       </p>
-      {activity.questions.map((q, i) => (
-        <QuestionCard
-          key={q.id}
-          q={q}
-          index={i}
-          value={answers[i]}
-          disabled={submitted}
-          reveal={submitted}
-          onChange={(v) => setAnswers((a) => a.map((x, j) => (j === i ? v : x)))}
-        />
-      ))}
-      {submitted ? (
+      {qs.map((q, i) => {
+        const gaveUp = locked[i] && answers[i] !== q.answerIndex;
+        return (
+          <div key={q.id}>
+            <QuestionCard
+              q={q}
+              index={i}
+              value={answers[i]}
+              disabled={locked[i]}
+              reveal={gaveUp}
+              markWrong={wrongNow[i] && !gaveUp}
+              onChange={(v) => {
+                setAnswers((a) => a.map((x, j) => (j === i ? v : x)));
+                setWrongNow((w) => w.map((x, j) => (j === i ? false : x)));
+              }}
+            />
+            <div aria-live="polite">
+              {wrongNow[i] && !gaveUp && (
+                <div key={tries[i]} className="mt-2 flex animate-shake gap-3 rounded-xl bg-cic-warn-bg p-4 text-cic-warn">
+                  <Lightbulb aria-hidden className="size-5 shrink-0" />
+                  <p>
+                    <strong>Not quite — here&apos;s a hint:</strong> {q.hint}
+                  </p>
+                </div>
+              )}
+              {gaveUp && (
+                <div className="mt-2 flex gap-3 rounded-xl bg-cic-tint p-4 text-cic-darker">
+                  <CheckCircle2 aria-hidden className="size-5 shrink-0" />
+                  <p>
+                    <strong>That one&apos;s tricky.</strong> {q.explanation}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      {finished ? (
         <div role="status" className="animate-pop rounded-[var(--radius-card)] border-2 border-cic-dark bg-cic-tint p-5">
           <p className="text-xl font-bold">
-            You got {Math.round(score * activity.questions.length)} of {activity.questions.length} right.
+            You got {Math.round(firstScore * qs.length)} of {qs.length} right on your first try.
           </p>
-          <Button type="button" className="mt-3" onClick={() => onComplete({ attempts: 1, score, response: answers })}>
+          <p className="mt-1 text-sm text-cic-muted">That first try is your score. The hints are there to help you learn.</p>
+          <Button type="button" className="mt-3" onClick={() => onComplete({ attempts: Math.max(1, ...tries.map((t) => t + 1)), score: firstScore, response: first ?? answers })}>
             Finish module <ArrowRight aria-hidden className="size-5" />
           </Button>
         </div>
@@ -199,7 +260,7 @@ export function QuizActivity({ activity, onComplete }: ActivityProps<"pretest" |
         <div className="flex items-center justify-end gap-3">
           {!all && <p className="text-sm text-cic-muted">Answer every question to continue.</p>}
           <Button type="submit" disabled={!all}>
-            {isPre ? "Submit warm-up" : "Submit answers"} <ArrowRight aria-hidden className="size-5" />
+            {isPre ? "Submit warm-up" : first ? "Check again" : "Submit answers"} <ArrowRight aria-hidden className="size-5" />
           </Button>
         </div>
       )}
@@ -261,7 +322,8 @@ export function CheckActivity({ activity, onComplete, onFailedCheck }: ActivityP
       </div>
       <div className="flex justify-end">
         {state === "right" ? (
-          <Button type="button" onClick={() => onComplete({ attempts, score: 1, response: value })}>
+          <Button type="button" onClick={() => // The first try counts: right straight away = 1, a hint and a retry first = 0.
+            onComplete({ attempts, score: attempts === 1 ? 1 : 0, response: value })}>
             Continue <ArrowRight aria-hidden className="size-5" />
           </Button>
         ) : (
