@@ -4,7 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView, highlightActiveLine, keymap, lineNumbers } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { bracketMatching, defaultHighlightStyle, indentOnInput, syntaxHighlighting } from "@codemirror/language";
+import { HighlightStyle, bracketMatching, indentOnInput, syntaxHighlighting } from "@codemirror/language";
+import { tags as t } from "@lezer/highlight";
+
+// Colors are CSS variables (globals.css) so the editor follows light/dark mode at AA contrast.
+const cicHighlight = HighlightStyle.define([
+  { tag: [t.keyword, t.controlKeyword, t.definitionKeyword, t.operatorKeyword, t.bool, t.null], color: "var(--cm-keyword)", fontWeight: "bold" },
+  { tag: [t.string, t.special(t.string)], color: "var(--cm-string)" },
+  { tag: [t.number], color: "var(--cm-number)" },
+  { tag: [t.comment, t.lineComment], color: "var(--cm-comment)", fontStyle: "italic" },
+  { tag: [t.function(t.variableName), t.definition(t.variableName), t.className], color: "var(--cm-def)" },
+  { tag: [t.variableName, t.propertyName, t.operator, t.punctuation], color: "var(--cm-name)" },
+]);
 import { python } from "@codemirror/lang-python";
 
 /**
@@ -44,7 +55,7 @@ export function CodeEditor({
           history(),
           indentOnInput(),
           bracketMatching(),
-          syntaxHighlighting(defaultHighlightStyle),
+          syntaxHighlighting(cicHighlight),
           python(),
           keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
           EditorView.contentAttributes.of({
@@ -67,11 +78,12 @@ export function CodeEditor({
             if (u.docChanged) onChangeRef.current(u.state.doc.toString());
           }),
           EditorView.theme({
-            "&": { backgroundColor: "#fff", border: "2px solid #c8c8c8", borderRadius: "12px" },
-            ".cm-gutters": { backgroundColor: "#e6f4ed", color: "#595959", border: "none", borderRadius: "10px 0 0 10px" },
-            ".cm-content": { fontFamily: "'Courier New', Courier, monospace", padding: "12px 0" },
-            ".cm-activeLine": { backgroundColor: "#f3faf6" },
-            ".cm-activeLineGutter": { backgroundColor: "#cfe9db" },
+            "&": { backgroundColor: "var(--color-white)", color: "var(--color-black)", border: "2px solid var(--color-cic-line)", borderRadius: "12px" },
+            ".cm-gutters": { backgroundColor: "var(--color-cic-tint)", color: "var(--color-cic-muted)", border: "none", borderRadius: "10px 0 0 10px" },
+            ".cm-content": { fontFamily: "'Courier New', Courier, monospace", padding: "12px 0", caretColor: "var(--color-black)" },
+            ".cm-cursor": { borderLeftColor: "var(--color-black)" },
+            ".cm-activeLine": { backgroundColor: "var(--cm-active-line)" },
+            ".cm-activeLineGutter": { backgroundColor: "var(--color-cic-tint)", color: "var(--color-black)" },
           }),
         ],
       }),

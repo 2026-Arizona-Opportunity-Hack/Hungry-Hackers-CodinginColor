@@ -14,14 +14,24 @@ export function Logo({ variant = "horizontal", className }: { variant?: "horizon
     stacked: { file: "/brand/cic-logo-stacked.png", w: 600, h: 593 },
     icon: { file: "/brand/cic-icon.png", w: 591, h: 600 },
   }[variant];
-  return <Image src={src.file} alt="Coding in Color" width={src.w} height={src.h} className={className} priority />;
+  // Brand rule: the logo sits on white, so dark mode gives it a white backing.
+  return (
+    <Image
+      src={src.file}
+      alt="Coding in Color"
+      width={src.w}
+      height={src.h}
+      className={cx("dark:rounded-lg dark:bg-[#fff] dark:p-1", className)}
+      priority
+    />
+  );
 }
 
 const buttonBase =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-6 py-2.5 font-bold transition-[color,background-color,transform,box-shadow] duration-100 active:translate-y-[3px] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0";
 const buttonVariants = {
   primary:
-    "bg-cic-dark text-white shadow-slab hover:bg-[#008544] active:shadow-slab-pressed disabled:active:shadow-slab",
+    "bg-cic-dark text-white shadow-slab hover:bg-cic-hover active:shadow-slab-pressed disabled:active:shadow-slab",
   secondary:
     "border-2 border-cic-line bg-white text-cic-dark shadow-slab-gray hover:bg-cic-tint active:shadow-slab-gray-pressed disabled:active:shadow-slab-gray",
   /** For use on dark-green panels. */

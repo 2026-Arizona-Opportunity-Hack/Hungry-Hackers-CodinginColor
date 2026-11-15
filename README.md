@@ -77,6 +77,17 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 
 Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Students join and save progress through server routes (`/api/join/*`, `/api/progress`) with a signed-in cookie. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
 
+## Accessibility
+
+Every page has a **Display** button (bottom left) with:
+
+- **Theme:** match device, light or dark. Dark mode swaps the brand color tokens in `web/src/app/globals.css`, so all screens follow it, the Python editor included. Text stays at 6:1 contrast or better.
+- **Text size:** four steps up to 150%. All sizes and spacing are in rem, so the whole layout scales.
+- **Easy-read font** (Lexend) and **extra text spacing** (WCAG 1.4.12 values), which help many dyslexic readers.
+- **Reduce motion:** turns off animations and confetti (also automatic when the device asks for reduced motion).
+
+Choices are saved per device (`web/src/lib/display-prefs.ts`) and applied before the page draws. The rest of the site keeps WCAG 2.2 AA basics: a skip link, visible focus rings, keyboard-only use (the code editor is never a keyboard trap) and labelled controls.
+
 ## Tech stack
 
 - Frontend: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, lucide icons
