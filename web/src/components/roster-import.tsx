@@ -37,7 +37,7 @@ export function RosterImport({ seedOffset, onParsed }: { seedOffset: number; onP
           Upload a CSV file
         </label>
         <p id={`${id}-help`} className="text-sm text-cic-muted">
-          Columns: <code>first_name,last_name</code> or a single <code>name</code> column. Only first name and last initial are kept.
+          Columns: <code>first_name,last_name</code> or a single <code>name</code> column. A plain list of names, one per line, works too. Only first name and last initial are kept.
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <input

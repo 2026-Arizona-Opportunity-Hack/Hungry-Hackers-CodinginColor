@@ -3,11 +3,13 @@
 import { Printer, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { RosterImport } from "@/components/roster-import";
+import { LoadProblem, NoClasses } from "@/components/teacher-states";
 import { Button, Card, Loading, PageTitle, ProgressBar, StatusBadge } from "@/components/ui";
 import { courseProgress, signedPct, studentGain, studentStatus, type StudentStatus } from "@/lib/analytics";
 import type { RosterParseResult } from "@/lib/csv";
 import { pictureName } from "@/lib/picture-codes";
-import { saveClass } from "@/lib/repo";
+import { DEMO_CLASS_CODE } from "@/lib/demo-data";
+import { addStudents as addStudentsToClass } from "@/lib/teacher-store";
 import { useTeacherClass } from "@/lib/use-teacher";
 
 const FILTERS: { value: StudentStatus | "all"; label: string }[] = [
@@ -19,7 +21,7 @@ const FILTERS: { value: StudentStatus | "all"; label: string }[] = [
 ];
 
 export default function RosterPage() {
-  const ctx = useTeacherClass();
+  const { ctx, error } = useTeacherClass();
   const [filter, setFilter] = useState<StudentStatus | "all">("all");
   const [adding, setAdding] = useState(false);
   const [pending, setPending] = useState<RosterParseResult | null>(null);
@@ -37,16 +39,23 @@ export default function RosterPage() {
       .sort((a, b) => a.s.firstName.localeCompare(b.s.firstName));
   }, [ctx]);
 
-  if (!ctx) return <Loading />;
+  if (error) return <LoadProblem message={error} />;
+  if (ctx === undefined) return <Loading />;
+  if (ctx === null) return <NoClasses />;
   const { cls } = ctx;
-  const isDemo = cls.id === "maryvale-p3";
+  const isDemo = cls.code === DEMO_CLASS_CODE;
   const shown = filter === "all" ? rows : rows.filter((r) => r.st.status === filter);
 
-  function addStudents() {
+  async function addStudents() {
     if (!pending) return;
     const existing = new Set(cls.roster.map((s) => `${s.firstName} ${s.lastInitial}`.toLowerCase()));
     const fresh = pending.students.filter((s) => !existing.has(`${s.firstName} ${s.lastInitial}`.toLowerCase()));
-    saveClass({ ...cls, roster: [...cls.roster, ...fresh.map((s) => ({ ...s, id: `${cls.id}-${s.id}` }))] });
+    try {
+      await addStudentsToClass(cls.id, fresh);
+    } catch (e) {
+      setSaved(`Couldn't save the students: ${e instanceof Error ? e.message : "please try again"}.`);
+      return;
+    }
     setSaved(`Added ${fresh.length} student${fresh.length === 1 ? "" : "s"}${fresh.length < pending.students.length ? " (duplicates skipped)" : ""}.`);
     setPending(null);
     setAdding(false);

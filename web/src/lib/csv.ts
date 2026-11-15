@@ -34,7 +34,7 @@ const clean = (s: string) => s.replace(/[<>]/g, "").trim().slice(0, 40);
 
 /**
  * Parse a roster CSV. Accepts either `first_name,last_name` columns
- * (any common spelling) or a single `name` column. Only the first name and
+ * (any common spelling), a single `name` column, or a plain list with no header. Only the first name and
  * last initial are kept — we never store a student's full name.
  */
 export function parseRosterCsv(text: string, seedOffset = 0): RosterParseResult {
@@ -53,28 +53,32 @@ export function parseRosterCsv(text: string, seedOffset = 0): RosterParseResult 
   const lastCol = header.findIndex((h) => ["lastname", "last", "surname", "familyname", "lname"].includes(h));
   const nameCol = header.findIndex((h) => ["name", "studentname", "fullname", "student"].includes(h));
 
-  if (firstCol === -1 && nameCol === -1) {
-    return {
-      students,
-      errors: [
-        {
-          row: headerIdx + 1,
-          message: 'Couldn\'t find a name column. The first row should be "first_name,last_name" or "name".',
-        },
-      ],
-      warnings,
-    };
+  // No recognizable header? Treat every line as a student, e.g. "Ana Lopez",
+  // "Ana, Lopez" or a quoted "Ana, Lopez".
+  const headerless = firstCol === -1 && nameCol === -1;
+  if (headerless) {
+    warnings.push({ row: headerIdx + 1, message: "No header row found, so every line was read as a student (first name, then last name)." });
   }
 
   const seen = new Set<string>();
-  for (let i = headerIdx + 1; i < lines.length; i++) {
+  for (let i = headerless ? headerIdx : headerIdx + 1; i < lines.length; i++) {
     const raw = lines[i];
     if (raw.trim() === "") continue;
     const rowNum = i + 1;
-    const cells = splitLine(raw);
+    let cells = splitLine(raw);
+    if (headerless && cells.length === 1 && cells[0].includes(",")) cells = cells[0].split(",").map((c) => c.trim());
     let first = "";
     let last = "";
-    if (firstCol !== -1) {
+    if (headerless) {
+      if (cells.length >= 2) {
+        first = clean(cells[0]);
+        last = clean(cells[1]);
+      } else {
+        const parts = clean(cells[0] ?? "").split(/\s+/).filter(Boolean);
+        first = parts[0] ?? "";
+        last = parts.length > 1 ? parts[parts.length - 1] : "";
+      }
+    } else if (firstCol !== -1) {
       first = clean(cells[firstCol] ?? "");
       last = lastCol !== -1 ? clean(cells[lastCol] ?? "") : "";
     } else {

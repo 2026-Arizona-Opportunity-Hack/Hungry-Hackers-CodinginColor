@@ -15,13 +15,16 @@ import {
   signedPct,
   studentStatus,
 } from "@/lib/analytics";
+import { LoadProblem, NoClasses } from "@/components/teacher-states";
 import { CONCEPT_LABELS } from "@/lib/types";
 import { useTeacherClass } from "@/lib/use-teacher";
 
 export default function TeacherOverview() {
-  const ctx = useTeacherClass();
+  const { ctx, error } = useTeacherClass();
   const [copied, setCopied] = useState(false);
-  if (!ctx) return <Loading />;
+  if (error) return <LoadProblem message={error} />;
+  if (ctx === undefined) return <Loading />;
+  if (ctx === null) return <NoClasses />;
   const { cls, modules, progress, loadedAt } = ctx;
 
   const rows = cls.roster.map((s) => ({ s, p: progress[s.id], st: studentStatus(progress[s.id], modules) }));

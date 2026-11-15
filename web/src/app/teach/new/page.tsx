@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { RosterImport } from "@/components/roster-import";
 import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
 import type { RosterParseResult } from "@/lib/csv";
-import { getCourses, newClassCode, saveClass } from "@/lib/repo";
+import { getCourses } from "@/lib/repo";
+import { createClass } from "@/lib/teacher-store";
 import type { Classroom } from "@/lib/types";
 import { selectClass } from "@/lib/use-teacher";
 
@@ -40,13 +41,14 @@ export default function NewClassWizard() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Classroom | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     headingRef.current?.focus();
   }, [step]);
 
-  function next() {
+  async function next() {
     setError(null);
     if (step === 0 && (!name.trim() || !school.trim() || !teacher.trim())) {
       return setError("Please fill in the class name, school and your name.");
@@ -56,23 +58,26 @@ export default function NewClassWizard() {
     }
     if (step === 2) {
       if (moduleIds.length === 0) return setError("Pick at least one module.");
-      const id = `c-${Date.now().toString(36)}`;
-      const cls: Classroom = {
-        id,
-        name: name.trim().slice(0, 60),
-        school: school.trim().slice(0, 60),
-        teacherName: teacher.trim().slice(0, 40),
-        code: newClassCode(),
-        courseId: course.id,
-        // Keep the course order even if modules were toggled out of order.
-        assignedModuleIds: course.modules.map((m) => m.id).filter((m) => moduleIds.includes(m)),
-        roster: roster!.students.map((s) => ({ ...s, id: `${id}-${s.id}` })),
-        createdAt: new Date().toISOString(),
-      };
-      saveClass(cls);
-      selectClass(cls.id);
-      setCreated(cls);
-      setFinishedAt(Date.now());
+      setSaving(true);
+      try {
+        const cls = await createClass({
+          name: name.trim().slice(0, 60),
+          school: school.trim().slice(0, 60),
+          teacherName: teacher.trim().slice(0, 40),
+          courseId: course.id,
+          // Keep the course order even if modules were toggled out of order.
+          assignedModuleIds: course.modules.map((m) => m.id).filter((m) => moduleIds.includes(m)),
+          roster: roster!.students,
+        });
+        selectClass(cls.id);
+        setCreated(cls);
+        setFinishedAt(Date.now());
+      } catch (e) {
+        setError(`We couldn't save the class: ${e instanceof Error ? e.message : "please try again"}.`);
+        return;
+      } finally {
+        setSaving(false);
+      }
     }
     setStep((s) => s + 1);
   }
@@ -197,8 +202,8 @@ export default function NewClassWizard() {
             <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0}>
               <ArrowLeft aria-hidden className="size-4" /> Back
             </Button>
-            <Button onClick={next}>
-              {step === 2 ? "Create class" : "Next"} <ArrowRight aria-hidden className="size-4" />
+            <Button onClick={next} disabled={saving}>
+              {step === 2 ? (saving ? "Saving…" : "Create class") : "Next"} <ArrowRight aria-hidden className="size-4" />
             </Button>
           </div>
         )}

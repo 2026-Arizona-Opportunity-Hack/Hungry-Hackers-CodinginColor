@@ -56,17 +56,17 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 | Role | How |
 |---|---|
 | Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉 |
-| Teacher | `/teach` — sample Maryvale cohort (24 students) · `/teach/new` to create a class in under 10 minutes |
+| Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes |
 | Reviewer | `/curriculum` — read-only catalog, no student data |
 
-Status: UI complete on demo data stored in the browser. Backend (Supabase auth + database) is next; all data access goes through `web/src/lib/repo.ts` so it swaps in one place. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
+Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Student join and progress still use browser storage; moving them behind server routes is next. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
 
 ## Tech stack
 
 - Frontend: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, lucide icons
 - Code editor / runner: CodeMirror 6 + Pyodide (Python in a Web Worker, no server)
-- Backend / database: planned — Supabase (Postgres + row-level security); demo data in browser storage for now
-- APIs / services: none yet — no API keys required to run
+- Backend / database: Supabase (Postgres, row-level security, email + password auth for teachers). Schema is in `supabase/migrations/`
+- APIs / services: Supabase only — see `.env.example`
 
 ## Run it locally
 
@@ -79,7 +79,7 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-No `.env` is needed yet. `npm run build` type-checks and builds; `npm run lint` runs ESLint.
+Create `web/.env.local` from `.env.example` with your Supabase URL, publishable key and secret key (never commit it). Then load the sample class and trial teacher with `npm run seed:demo` (safe to re-run). To set up a fresh Supabase project, run the files in `supabase/migrations/` in order in its SQL editor first. `npm run build` type-checks and builds; `npm run lint` runs ESLint.
 
 **Accessibility:** every flow works keyboard-only (skip link, visible focus, in the code editor press Esc then Tab to leave), status is always icon + text, and brand green is only used for text where it passes WCAG AA.
 
