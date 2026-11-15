@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { asRole, type Role } from "@/lib/roles";
+import { DEMO_ADMIN_EMAIL } from "@/lib/demo-accounts";
 import { supabaseAdmin } from "./admin";
 
 /** Supabase client acting as whoever is signed in (reads the session cookie). */
@@ -38,5 +39,7 @@ export async function requireRole(allowed: Role[]) {
   const profile = await db.from("profiles").select("role").eq("id", user.id).maybeSingle();
   const role = asRole(profile.data?.role);
   if (!allowed.includes(role)) return { error: NextResponse.json({ error: "forbidden" }, { status: 403 }) };
-  return { db, user, role };
+  // The public trial admin may look but not change live data or add accounts.
+  const demo = user.email?.toLowerCase() === DEMO_ADMIN_EMAIL;
+  return { db, user, role, demo };
 }

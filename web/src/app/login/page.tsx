@@ -5,23 +5,25 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Info, LogIn } from "lucide-react";
 import { Brackets, Button, Logo } from "@/components/ui";
+import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-accounts";
 import { asRole, safeNextPath } from "@/lib/roles";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 // Public on purpose: a teacher who only sees the sample class, and a reviewer
-// who only sees the curriculum. Created by `npm run seed:demo`. There is no
-// public admin login, because an admin can read every class and add accounts.
+// who only sees the curriculum, and a look-around CIC admin (the server blocks it
+// from publishing or creating accounts). Created by `npm run seed:demo`.
 const TRIALS = [
   { id: "teacher", label: "Teacher", note: "Explore a sample class of 24 students.", email: "demo.teacher@example.com", password: "CICdemo-2026!" },
+  { id: "admin", label: "CIC Admin", note: "See every school and cohort, grant numbers and the curriculum editor. Look-around only: publishing and adding accounts are turned off.", email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD },
   { id: "reviewer", label: "External reviewer", note: "Read the whole curriculum, answer keys included.", email: "demo.reviewer@example.com", password: "CICreview-2026!" },
 ];
 
 const VARIANTS = {
-  teacher: { title: "Sign in", blurb: "For teachers, CIC staff and curriculum reviewers.", trials: ["teacher", "reviewer"] },
+  teacher: { title: "Sign in", blurb: "For teachers, CIC staff and curriculum reviewers.", trials: ["teacher", "admin", "reviewer"] },
   admin: {
     title: "CIC Admin sign in",
     blurb: "See every class and school, pull grant numbers, add partner schools and publish curriculum.",
-    trials: [] as string[],
+    trials: ["admin"],
   },
   reviewer: { title: "Reviewer sign in", blurb: "Read-only access to the full curriculum, answer keys included.", trials: ["reviewer"] },
 };

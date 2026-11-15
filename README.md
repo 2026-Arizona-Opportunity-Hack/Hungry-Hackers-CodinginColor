@@ -58,7 +58,7 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 | Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉 |
 | Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes |
 | External reviewer | `/login` → trial reviewer `demo.reviewer@example.com` / `CICreview-2026!` → `/review` (curriculum with answer keys, read-only, no student data) |
-| CIC admin | `/login` → `demo.admin@example.com` → `/admin` (every school and cohort, grant-report CSV, add schools and teacher logins). The password is **not public**: `npm run seed:demo` prints it once, or set `DEMO_ADMIN_PASSWORD` in `web/.env.local` first. |
+| CIC admin | `/login` → trial admin `demo.admin@example.com` / `CICadmin-2026!` → `/admin` (every school and cohort, grant-report CSVs, curriculum editor). **Look-around only:** the server refuses to publish curriculum or create accounts for this login. The owner's full-power admin is `cic.admin@example.com`; its password is **not public** (`npm run seed:demo` prints it once, or set `DEMO_ADMIN_PASSWORD` in `web/.env.local` first). |
 | Public catalog | `/curriculum` — short read-only catalog, no sign-in |
 
 **What a CIC admin can do** (`/admin`, sign in via the **CIC Admin** button on the home page):

@@ -89,6 +89,7 @@ export async function POST(request: Request) {
   }
 
   if (body?.action !== "publish") return fail("Unknown action.");
+  if (auth.demo) return fail("The demo admin can edit drafts but can't publish. Sign in with your own admin login to publish.", 403);
 
   const result = validateCourse(draft.content, published.content, [CODE_COURSES[courseId], draft.content, published.content]);
   const problems = [...result.errors, ...result.publishErrors];
