@@ -24,7 +24,6 @@ export async function POST(request: Request) {
   const auth = await requireRole(["admin"]);
   if ("error" in auth) return auth.error;
   const { db, user } = auth;
-  if (auth.demo) return fail("The demo admin can look around but can't add schools or accounts. Sign in with your own admin login to do that.", 403);
 
   const body = (await request.json().catch(() => null)) as Record<string, any> | null; // eslint-disable-line @typescript-eslint/no-explicit-any
   if (!body || typeof body !== "object") return fail("Bad request.");

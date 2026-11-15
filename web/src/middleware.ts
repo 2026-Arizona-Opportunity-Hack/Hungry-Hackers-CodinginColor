@@ -27,11 +27,12 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const redirect = (to: string, next?: string) => {
+  const redirect = (to: string, next?: string, wrongRole?: string) => {
     const url = request.nextUrl.clone();
     url.pathname = to;
     url.search = "";
     if (next) url.searchParams.set("next", next);
+    if (wrongRole) url.searchParams.set("wrong", wrongRole);
     return NextResponse.redirect(url);
   };
 
@@ -43,8 +44,10 @@ export async function middleware(request: NextRequest) {
   // database's row-level security and the API routes do the real enforcing.)
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   const role = asRole(profile?.role);
-  if (pathname === "/login") return redirect(homeFor(role));
-  if (!canOpen(role, pathname)) return redirect(homeFor(role));
+  // `?wrong=` means "you're signed in as the wrong role for that page": show the sign-in
+  // page with an explanation instead of silently dropping you into another role's area.
+  if (pathname === "/login") return request.nextUrl.searchParams.has("wrong") ? response : redirect(homeFor(role));
+  if (!canOpen(role, pathname)) return redirect("/login", pathname, role);
   return response;
 }
 

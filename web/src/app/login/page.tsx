@@ -6,15 +6,15 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Info, LogIn } from "lucide-react";
 import { Brackets, Button, Logo } from "@/components/ui";
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-accounts";
-import { asRole, safeNextPath } from "@/lib/roles";
+import { asRole, homeFor, ROLE_LABELS, safeNextPath, type Role } from "@/lib/roles";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 // Public on purpose: a teacher who only sees the sample class, and a reviewer
-// who only sees the curriculum, and a look-around CIC admin (the server blocks it
-// from publishing or creating accounts). Created by `npm run seed:demo`.
+// who only sees the curriculum, and a CIC admin with full powers for the demo.
+// Created by `npm run seed:demo`. Rotate or remove these before real use.
 const TRIALS = [
   { id: "teacher", label: "Teacher", note: "Explore a sample class of 24 students.", email: "demo.teacher@example.com", password: "CICdemo-2026!" },
-  { id: "admin", label: "CIC Admin", note: "See every school and cohort, grant numbers and the curriculum editor. Look-around only: publishing and adding accounts are turned off.", email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD },
+  { id: "admin", label: "CIC Admin", note: "Full access: every school and cohort, grant numbers, the curriculum editor with publishing, and adding schools and accounts.", email: DEMO_ADMIN_EMAIL, password: DEMO_ADMIN_PASSWORD },
   { id: "reviewer", label: "External reviewer", note: "Read the whole curriculum, answer keys included.", email: "demo.reviewer@example.com", password: "CICreview-2026!" },
 ];
 
@@ -31,8 +31,12 @@ const VARIANTS = {
 export default function LoginPage() {
   const router = useRouter();
   const [variant, setVariant] = useState<keyof typeof VARIANTS>("teacher");
+  const [wrongRole, setWrongRole] = useState<Role | null>(null);
   useEffect(() => {
-    const next = new URLSearchParams(window.location.search).get("next") ?? "";
+    const params = new URLSearchParams(window.location.search);
+    const wrong = params.get("wrong");
+    setWrongRole(wrong === "teacher" || wrong === "admin" || wrong === "reviewer" ? wrong : null);
+    const next = params.get("next") ?? "";
     setVariant(next.startsWith("/admin") ? "admin" : next.startsWith("/review") ? "reviewer" : "teacher");
   }, []);
   const v = VARIANTS[variant];
@@ -81,6 +85,19 @@ export default function LoginPage() {
             {v.title}
           </h1>
           <p className="mt-1 text-center text-cic-muted">{v.blurb}</p>
+
+          {wrongRole && (
+            <div role="alert" className="mt-5 rounded-xl bg-cic-warn-bg p-3 text-sm text-cic-warn">
+              <p className="font-bold">You&apos;re signed in as a {ROLE_LABELS[wrongRole]}, and that page is for a different role.</p>
+              <p className="mt-1">
+                This browser holds one login at a time, so signing in as someone else in another tab or window replaces it. Sign in below with the right account, or{" "}
+                <Link href={homeFor(wrongRole)} className="font-bold underline">
+                  continue as {ROLE_LABELS[wrongRole]}
+                </Link>
+                . To use two accounts side by side, use a private window for the second one.
+              </p>
+            </div>
+          )}
 
           <form onSubmit={signIn} className="mt-6" noValidate>
             <label htmlFor="email" className="block font-bold">

@@ -6,7 +6,7 @@
  * Creates:
  *   - a trial teacher with the sample Maryvale class        (public login)
  *   - a trial external reviewer (read-only curriculum)       (public login)
- *   - a trial CIC admin (look-around only: can't publish or add accounts) (public login)
+ *   - a trial CIC admin with full powers, for the demo           (public login)
  *   - the owner's real CIC admin, with full powers            (PRIVATE password)
  *   - two more partner schools with their own teachers and cohorts
  *
@@ -235,8 +235,8 @@ async function main() {
   console.log("\nTrial logins:");
   console.log(`  Teacher   ${DEMO_TEACHER_EMAIL}  (public, shown on /login)`);
   console.log(`  Reviewer  ${DEMO_REVIEWER_EMAIL}  (public, shown on /login)`);
-  console.log(`  Admin     ${DEMO_ADMIN_EMAIL}  (public, look-around only)`);
-  console.log(`  Owner     ${OWNER_ADMIN_EMAIL}  (private, full powers)`);
+  console.log(`  Admin     ${DEMO_ADMIN_EMAIL}  (public, full powers: rotate after the demo)`);
+  console.log(`  Owner     ${OWNER_ADMIN_EMAIL}  (private)`);
   if (admin.newPassword) console.log(`            password (shown once, save it): ${admin.newPassword}`);
   else console.log("            password unchanged (set DEMO_ADMIN_PASSWORD in .env.local to reset it)");
 }
