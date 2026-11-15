@@ -270,3 +270,25 @@ body {
   background: none !important;
   box-shadow: none !important;
 }
+
+/* Reading tools (components/reading-tools.tsx). Marker yellow and the reading
+   cursor keep black/white text so they read the same in light and dark mode. */
+[data-word][data-hl] {
+  background: #fde047;
+  color: #000;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px #fde047;
+}
+[data-word][data-reading] {
+  background: var(--color-cic-dark);
+  color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 3px var(--color-cic-dark);
+}
+.hl-mode [data-word] {
+  cursor: pointer;
+}
+.hl-mode [data-word]:hover {
+  text-decoration: underline wavy #ca8a04;
+  text-underline-offset: 3px;
+}
