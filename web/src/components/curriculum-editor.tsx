@@ -93,7 +93,7 @@ export function ListButtons({ i, length, onMove, onRemove, label }: { i: number;
 
 // ---------- questions (warm-up, quick check, wrap-up) ----------
 
-function QuestionEditor({ q, n, onChange }: { q: ChoiceQuestion; n: number; onChange: (q: ChoiceQuestion) => void }) {
+function QuestionEditor({ q, n, onChange, feedback }: { q: ChoiceQuestion; n: number; onChange: (q: ChoiceQuestion) => void; feedback: boolean }) {
   const group = useId();
   const setChoice = (i: number, text: string) => onChange({ ...q, choices: q.choices.map((c, k) => (k === i ? text : c)) });
   return (
@@ -128,13 +128,32 @@ function QuestionEditor({ q, n, onChange }: { q: ChoiceQuestion; n: number; onCh
         )}
       </fieldset>
       <ConceptSelect value={q.concept} onChange={(concept) => onChange({ ...q, concept })} />
-      <TextField label="Hint after a wrong answer" help="A nudge, never the answer." value={q.hint} onChange={(hint) => onChange({ ...q, hint })} max={400} long />
-      <TextField label="Explanation after answering" value={q.explanation} onChange={(explanation) => onChange({ ...q, explanation })} max={400} long />
+      {feedback ? (
+        <>
+          <TextField label="Hint after a wrong answer" help="A nudge, never the answer. Shown when a student answers wrong, before they retry." value={q.hint} onChange={(hint) => onChange({ ...q, hint })} max={400} long />
+          <TextField label="Explanation" help="Shown after the right answer, or if a student is still stuck after a few tries." value={q.explanation} onChange={(explanation) => onChange({ ...q, explanation })} max={400} long />
+        </>
+      ) : (
+        <p className="rounded-lg bg-cic-tint p-3 text-sm">Warm-up questions give students no hints or feedback, so there&apos;s nothing else to fill in.</p>
+      )}
     </div>
   );
 }
 
-export function QuestionsEditor({ questions, onChange, locked }: { questions: ChoiceQuestion[]; onChange: (q: ChoiceQuestion[]) => void; locked?: boolean }) {
+export function QuestionsEditor({
+  questions,
+  onChange,
+  locked,
+  feedback = true,
+  max = 12,
+}: {
+  questions: ChoiceQuestion[];
+  onChange: (q: ChoiceQuestion[]) => void;
+  locked?: boolean;
+  /** false for the warm-up quiz: no hint or explanation is ever shown to students. */
+  feedback?: boolean;
+  max?: number;
+}) {
   return (
     <div className="space-y-4">
       {locked && (
@@ -148,10 +167,10 @@ export function QuestionsEditor({ questions, onChange, locked }: { questions: Ch
             <h4 className="font-bold text-cic-dark">Question {i + 1}</h4>
             <ListButtons i={i} length={questions.length} label={`question ${i + 1}`} onMove={(d) => onChange(move(questions, i, d))} onRemove={() => onChange(questions.filter((_, k) => k !== i))} />
           </div>
-          <QuestionEditor q={q} n={i + 1} onChange={(nq) => onChange(questions.map((x, k) => (k === i ? nq : x)))} />
+          <QuestionEditor q={q} n={i + 1} feedback={feedback} onChange={(nq) => onChange(questions.map((x, k) => (k === i ? nq : x)))} />
         </div>
       ))}
-      <Button type="button" variant="secondary" onClick={() => onChange([...questions, blankQuestion("q")])} disabled={questions.length >= 12}>
+      <Button type="button" variant="secondary" onClick={() => onChange([...questions, blankQuestion("q")])} disabled={questions.length >= max}>
         <Plus aria-hidden className="size-4" /> Add a question
       </Button>
     </div>
