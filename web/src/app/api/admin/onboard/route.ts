@@ -3,11 +3,14 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/supabase/server";
 
 /**
- * CIC admins add a partner school and/or a teacher account without an
- * engineer. The caller's role is checked server-side; accounts are created
- * with the service key and always get role "teacher". A random temporary
- * password is returned once, for the admin to pass on.
+ * CIC admins add a partner school and/or a teacher or reviewer account without
+ * an engineer. The caller's role is checked server-side; accounts are created
+ * with the service key. The new account's role comes from a fixed allowlist
+ * (teacher or reviewer), so this route can never create an admin. A random
+ * temporary password is returned once, for the admin to pass on.
  */
+const ALLOWED_ROLES = ["teacher", "reviewer"] as const;
+type NewRole = (typeof ALLOWED_ROLES)[number];
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -28,7 +31,12 @@ export async function POST(request: Request) {
   // ---- which school? an existing one, or a new one ----
   let schoolId: string | null = null;
   let createdSchool = false;
-  if (body.schoolId !== undefined) {
+  // A reviewer account needs no school; everything else does.
+  const wantsSchool = body.schoolId !== undefined || body.school !== undefined;
+  if (!wantsSchool && body.account?.role !== "reviewer") return fail("Pick a school or enter a new one.");
+  if (!wantsSchool) {
+    /* reviewer only */
+  } else if (body.schoolId !== undefined) {
     if (typeof body.schoolId !== "string" || !UUID.test(body.schoolId)) return fail("Pick a school from the list.");
     const found = await db.from("schools").select("id").eq("id", body.schoolId).maybeSingle();
     if (!found.data) return fail("That school doesn't exist.", 404);
@@ -53,21 +61,23 @@ export async function POST(request: Request) {
     createdSchool = true;
   }
 
-  // ---- optional teacher account ----
-  if (body.teacher === undefined || body.teacher === null) return NextResponse.json({ schoolId });
+  // ---- optional login (teacher or reviewer) ----
+  const account = body.account ?? (body.teacher ? { ...body.teacher, role: "teacher" } : null);
+  if (!account) return NextResponse.json({ schoolId });
+  const role: NewRole = ALLOWED_ROLES.includes(account.role) ? account.role : "teacher";
 
-  const tName = text(body.teacher.name, 80);
-  const tEmail = text(body.teacher.email, 120)?.toLowerCase() ?? null;
+  const tName = text(account.name, 80);
+  const tEmail = text(account.email, 120)?.toLowerCase() ?? null;
   const undoSchool = async () => {
     if (createdSchool && schoolId) await db.from("schools").delete().eq("id", schoolId);
   };
   if (!tName) {
     await undoSchool();
-    return fail("Enter the teacher's name.");
+    return fail("Enter the person's name.");
   }
   if (!tEmail || !EMAIL.test(tEmail)) {
     await undoSchool();
-    return fail("Enter a valid teacher email.");
+    return fail("Enter a valid email.");
   }
 
   const tempPassword = randomBytes(10).toString("base64url");
@@ -75,19 +85,19 @@ export async function POST(request: Request) {
   if (created.error || !created.data.user) {
     await undoSchool();
     const exists = /already|registered|exists/i.test(created.error?.message ?? "");
-    return fail(exists ? "An account with that email already exists." : "Couldn't create the teacher account.", exists ? 409 : 500);
+    return fail(exists ? "An account with that email already exists." : "Couldn't create the account.", exists ? 409 : 500);
   }
 
   // The role is set here, on the server. Never from anything the user can edit.
   const prof = await db
     .from("profiles")
-    .update({ role: "teacher", display_name: tName, school_id: schoolId, email: tEmail })
+    .update({ role, display_name: tName, school_id: schoolId, email: tEmail })
     .eq("id", created.data.user.id);
   if (prof.error) {
     await db.auth.admin.deleteUser(created.data.user.id);
     await undoSchool();
-    return fail("Couldn't finish setting up the teacher.", 500);
+    return fail("Couldn't finish setting up the account.", 500);
   }
 
-  return NextResponse.json({ schoolId, teacher: { email: tEmail, tempPassword } });
+  return NextResponse.json({ schoolId, account: { role, email: tEmail, tempPassword }, teacher: { email: tEmail, tempPassword } });
 }

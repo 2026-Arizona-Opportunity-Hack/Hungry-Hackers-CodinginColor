@@ -36,13 +36,17 @@ interface TeacherRow {
   display_name: string | null;
   email: string | null;
   school_id: string | null;
+  role: string;
 }
 
 export interface AdminData {
   data: TeacherData;
   schools: School[];
   teachers: TeacherAccount[];
+  reviewers: TeacherAccount[];
 }
+
+const toAccount = (t: TeacherRow): TeacherAccount => ({ id: t.id, name: t.display_name ?? "", email: t.email ?? "", schoolId: t.school_id });
 
 /** Everything the CIC admin sees. Row-level security gives admins every class. */
 export async function fetchAdminData(): Promise<AdminData> {
@@ -50,7 +54,7 @@ export async function fetchAdminData(): Promise<AdminData> {
   const [data, schools, teachers] = await Promise.all([
     fetchTeacherData(),
     db.from("schools").select("id, name, city, state, contact_name, contact_email, created_at").order("name"),
-    db.from("profiles").select("id, display_name, email, school_id").eq("role", "teacher").order("display_name"),
+    db.from("profiles").select("id, display_name, email, school_id, role").in("role", ["teacher", "reviewer"]).order("display_name"),
   ]);
   if (schools.error) throw new Error(schools.error.message);
   if (teachers.error) throw new Error(teachers.error.message);
@@ -65,19 +69,20 @@ export async function fetchAdminData(): Promise<AdminData> {
       contactEmail: s.contact_email,
       createdAt: s.created_at,
     })),
-    teachers: (teachers.data as TeacherRow[]).map((t) => ({ id: t.id, name: t.display_name ?? "", email: t.email ?? "", schoolId: t.school_id })),
+    teachers: (teachers.data as TeacherRow[]).filter((t) => t.role === "teacher").map(toAccount),
+    reviewers: (teachers.data as TeacherRow[]).filter((t) => t.role === "reviewer").map(toAccount),
   };
 }
 
 export interface OnboardInput {
   schoolId?: string;
   school?: { name: string; city: string; contactName: string; contactEmail: string };
-  teacher?: { name: string; email: string };
+  account?: { role: "teacher" | "reviewer"; name: string; email: string };
 }
 
 export interface OnboardResult {
-  schoolId: string;
-  teacher?: { email: string; tempPassword: string };
+  schoolId?: string;
+  account?: { role: "teacher" | "reviewer"; email: string; tempPassword: string };
 }
 
 /** Asks the server to add a school and/or a teacher account (admins only). */

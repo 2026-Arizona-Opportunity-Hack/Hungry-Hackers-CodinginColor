@@ -3,7 +3,7 @@
 import { Building2, Download, GraduationCap, LineChart, Plus, TrendingUp, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
-import { cohortsCsv, rollup, type ClassSummary } from "@/lib/admin-analytics";
+import { cohortsCsv, rollup, studentsCsv, type ClassSummary } from "@/lib/admin-analytics";
 import { pct, signedPct } from "@/lib/analytics";
 import { Button, Card, EmptyState, KpiCard, LinkButton, Loading, PageTitle, ProgressBar } from "@/components/ui";
 import { selectClass } from "@/lib/use-teacher";
@@ -74,7 +74,18 @@ export default function AdminOverview() {
         actions={
           <>
             <Button variant="secondary" onClick={() => download(`cic-cohort-report-${today}.csv`, cohortsCsv(rows))}>
-              <Download aria-hidden className="size-4" /> Download grant report (CSV)
+              <Download aria-hidden className="size-4" /> Cohort report (CSV)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                download(
+                  `cic-student-report-${today}.csv`,
+                  studentsCsv(rows.map((r) => ({ school: r.school, cls: r.summary.cls, progress: data.data.progress[r.summary.cls.id] ?? {} }))),
+                )
+              }
+            >
+              <Download aria-hidden className="size-4" /> Per-student report (CSV)
             </Button>
             <LinkButton href="/admin/schools">
               <Plus aria-hidden className="size-4" /> Add a school
@@ -190,8 +201,7 @@ export default function AdminOverview() {
         </table>
       </div>
       <p className="mt-3 text-sm text-cic-muted">
-        Learning gain is each student&apos;s wrap-up quiz score minus their warm-up score, averaged over students who took both. The CSV has one row per cohort,
-        ready for a grant report.
+        Learning gain is each student&apos;s wrap-up quiz score minus their warm-up score, averaged over students who took both. The cohort CSV has one row per cohort, and the per-student CSV has one row per student, both ready for a grant report.
       </p>
       <Card className="mt-6 print:hidden">
         <p className="text-sm text-cic-muted">

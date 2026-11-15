@@ -129,3 +129,35 @@ export function cohortsCsv(rows: { school: string; city: string; teacher: string
   );
   return [header.map(cell).join(","), ...lines].join("\r\n") + "\r\n";
 }
+
+/** One row per student, for grant reports that need per-student learning gain. */
+export function studentsCsv(
+  classes: { school: string; cls: Classroom; progress: Record<string, StudentProgress> }[],
+): string {
+  const header = ["School", "Class", "Class code", "Student", "Completion %", "Warm-up %", "Wrap-up %", "Learning gain (points)", "Status"];
+  const lines: string[] = [];
+  for (const { school, cls, progress } of classes) {
+    const course = getCourse(cls.courseId);
+    const modules = course ? assignedModules(course, cls) : [];
+    for (const s of [...cls.roster].sort((a, b) => a.firstName.localeCompare(b.firstName))) {
+      const p = progress[s.id];
+      const g = studentGain(p, modules);
+      lines.push(
+        [
+          school,
+          cls.name,
+          cls.code,
+          `${s.firstName} ${s.lastInitial ? s.lastInitial + "." : ""}`.trim(),
+          pctNum(courseProgress(p, modules)),
+          pctNum(g.pre),
+          pctNum(g.post),
+          pctNum(g.gain),
+          studentStatus(p, modules).status,
+        ]
+          .map(cell)
+          .join(","),
+      );
+    }
+  }
+  return [header.map(cell).join(","), ...lines].join("\r\n") + "\r\n";
+}

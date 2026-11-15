@@ -16,8 +16,24 @@ const TRIALS = [
   { id: "reviewer", label: "External reviewer", note: "Read the whole curriculum, answer keys included.", email: "demo.reviewer@example.com", password: "CICreview-2026!" },
 ];
 
+const VARIANTS = {
+  teacher: { title: "Sign in", blurb: "For teachers, CIC staff and curriculum reviewers.", trials: ["teacher", "reviewer"] },
+  admin: {
+    title: "CIC Admin sign in",
+    blurb: "See every class and school, pull grant numbers, add partner schools and publish curriculum.",
+    trials: [] as string[],
+  },
+  reviewer: { title: "Reviewer sign in", blurb: "Read-only access to the full curriculum, answer keys included.", trials: ["reviewer"] },
+};
+
 export default function LoginPage() {
   const router = useRouter();
+  const [variant, setVariant] = useState<keyof typeof VARIANTS>("teacher");
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next") ?? "";
+    setVariant(next.startsWith("/admin") ? "admin" : next.startsWith("/review") ? "reviewer" : "teacher");
+  }, []);
+  const v = VARIANTS[variant];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -60,9 +76,9 @@ export default function LoginPage() {
         <div className="rounded-[28px] bg-white p-6 shadow-[0_8px_0_var(--color-cic-darker)] md:p-8">
           <Logo variant="stacked" className="mx-auto h-auto w-28" />
           <h1 ref={headingRef} tabIndex={-1} className="mt-6 text-center font-display text-3xl text-cic-dark">
-            Sign in
+            {v.title}
           </h1>
-          <p className="mt-1 text-center text-cic-muted">For teachers, CIC staff and curriculum reviewers.</p>
+          <p className="mt-1 text-center text-cic-muted">{v.blurb}</p>
 
           <form onSubmit={signIn} className="mt-6" noValidate>
             <label htmlFor="email" className="block font-bold">
@@ -103,13 +119,14 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {v.trials.length > 0 ? (
           <section aria-labelledby="trial" className="mt-6 rounded-2xl bg-cic-tint p-4">
             <h2 id="trial" className="flex items-center gap-2 font-bold text-cic-darker">
               <Info aria-hidden className="size-5" /> Just looking around?
             </h2>
             <p className="mt-1 text-sm">Use a trial account. Students don&apos;t sign in; they join from the home page with a class code.</p>
             <ul className="mt-3 space-y-3">
-              {TRIALS.map((t) => (
+              {TRIALS.filter((t) => v.trials.includes(t.id)).map((t) => (
                 <li key={t.id} className="rounded-xl bg-white p-3">
                   <p className="font-bold">{t.label}</p>
                   <p className="text-sm text-cic-muted">{t.note}</p>
@@ -136,6 +153,11 @@ export default function LoginPage() {
               ))}
             </ul>
           </section>
+          ) : (
+            <p className="mt-6 rounded-2xl bg-cic-tint p-4 text-sm">
+              Admin accounts are created by the CIC team. Use the email and password you were given.
+            </p>
+          )}
 
           <Link href="/" className="mt-4 inline-flex min-h-11 items-center gap-1 font-bold text-cic-dark underline">
             <ArrowLeft aria-hidden className="size-4" /> Back to home

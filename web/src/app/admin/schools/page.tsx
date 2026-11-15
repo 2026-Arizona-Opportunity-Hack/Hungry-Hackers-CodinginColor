@@ -6,7 +6,7 @@ import { Button, Card, Loading, PageTitle } from "@/components/ui";
 import { onboard, type OnboardResult } from "@/lib/admin-store";
 import { useAdmin } from "@/lib/use-admin";
 
-type Mode = "new" | "existing";
+type Mode = "new" | "existing" | "reviewer";
 
 const input = "mt-1 block min-h-12 w-full rounded-xl border-2 border-cic-line px-3 focus:border-cic-dark";
 
@@ -33,22 +33,23 @@ export default function SchoolsPage() {
 
   const teachersBySchool = (id: string) => data.teachers.filter((t) => t.schoolId === id);
   const classesBySchool = (id: string) => summaries.filter((s) => s.cls.schoolId === id);
-  const hasTeacher = teacher.name.trim() || teacher.email.trim();
+  const hasPerson = teacher.name.trim() || teacher.email.trim();
+  const personLabel = mode === "reviewer" ? "Reviewer" : "Teacher";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setProblem(null);
     if (mode === "existing" && !schoolId) return setProblem("Pick a school.");
-    if (mode === "existing" && !(teacher.name.trim() && teacher.email.trim())) return setProblem("Enter the new teacher's name and email.");
+    if (mode !== "new" && !(teacher.name.trim() && teacher.email.trim())) return setProblem(`Enter the ${personLabel.toLowerCase()}'s name and email.`);
     if (mode === "new" && !school.name.trim()) return setProblem("Enter the school's name.");
-    if (hasTeacher && !(teacher.name.trim() && teacher.email.trim())) return setProblem("Enter both the teacher's name and email, or leave both empty.");
+    if (hasPerson && !(teacher.name.trim() && teacher.email.trim())) return setProblem("Enter both a name and an email, or leave both empty.");
     setBusy(true);
     try {
       const result = await onboard({
-        ...(mode === "existing" ? { schoolId } : { school }),
-        ...(hasTeacher ? { teacher } : {}),
+        ...(mode === "existing" ? { schoolId } : mode === "new" ? { school } : {}),
+        ...(hasPerson ? { account: { role: mode === "reviewer" ? ("reviewer" as const) : ("teacher" as const), ...teacher } } : {}),
       });
-      const name = mode === "existing" ? (data!.schools.find((s) => s.id === schoolId)?.name ?? "the school") : school.name.trim();
+      const name = mode === "existing" ? (data!.schools.find((s) => s.id === schoolId)?.name ?? "the school") : mode === "new" ? school.name.trim() : "";
       setDone({ result, schoolName: name });
       setCopied(false);
       setSchool({ name: "", city: "", contactName: "", contactEmail: "" });
@@ -62,11 +63,11 @@ export default function SchoolsPage() {
   }
 
   async function copyLogin() {
-    if (!done?.result.teacher) return;
+    if (!done?.result.account) return;
     const origin = window.location.origin;
     try {
       await navigator.clipboard.writeText(
-        `Welcome to CIC Learn! Sign in at ${origin}/login\nEmail: ${done.result.teacher.email}\nTemporary password: ${done.result.teacher.tempPassword}`,
+        `Welcome to CIC Learn! Sign in at ${origin}/login\nEmail: ${done.result.account.email}\nTemporary password: ${done.result.account.tempPassword}`,
       );
       setCopied(true);
     } catch {
@@ -82,7 +83,7 @@ export default function SchoolsPage() {
         <section aria-labelledby="add-heading">
           <Card>
             <h2 id="add-heading" className="mb-4 flex items-center gap-2 text-xl font-bold text-cic-dark">
-              <UserPlus aria-hidden className="size-5" /> Add a school or teacher
+              <UserPlus aria-hidden className="size-5" /> Add a school, teacher or reviewer
             </h2>
 
             <form onSubmit={submit} noValidate>
@@ -93,6 +94,7 @@ export default function SchoolsPage() {
                     [
                       ["new", "A new school"],
                       ["existing", "A teacher at an existing school"],
+                      ["reviewer", "An external reviewer"],
                     ] as const
                   ).map(([value, label]) => (
                     <label
@@ -106,7 +108,9 @@ export default function SchoolsPage() {
                 </div>
               </fieldset>
 
-              {mode === "existing" ? (
+              {mode === "reviewer" ? (
+                <p className="mb-4 rounded-xl bg-cic-tint p-3 text-sm">Reviewers get read-only access to the whole curriculum. They don&apos;t need a school and can&apos;t see any student data.</p>
+              ) : mode === "existing" ? (
                 <div className="mb-4">
                   <label htmlFor="school-pick" className="font-bold">
                     School
@@ -152,18 +156,18 @@ export default function SchoolsPage() {
 
               <fieldset className="rounded-2xl bg-cic-tint p-4">
                 <legend className="px-1 font-bold text-cic-darker">
-                  Teacher login {mode === "new" && <span className="font-normal">(optional, can add later)</span>}
+                  {personLabel} login {mode === "new" && <span className="font-normal">(optional, can add later)</span>}
                 </legend>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="teacher-name" className="font-bold">
-                      Teacher&apos;s name
+                      {personLabel}&apos;s name
                     </label>
-                    <input id="teacher-name" maxLength={80} value={teacher.name} onChange={(e) => setTeacher({ ...teacher, name: e.target.value })} className={input} placeholder="Ms. Rivera" />
+                    <input id="teacher-name" maxLength={80} value={teacher.name} onChange={(e) => setTeacher({ ...teacher, name: e.target.value })} className={input} placeholder={mode === "reviewer" ? "Dana Whitfield" : "Ms. Rivera"} />
                   </div>
                   <div>
                     <label htmlFor="teacher-email" className="font-bold">
-                      Teacher&apos;s email
+                      {personLabel}&apos;s email
                     </label>
                     <input id="teacher-email" type="email" maxLength={120} autoComplete="off" value={teacher.email} onChange={(e) => setTeacher({ ...teacher, email: e.target.value })} className={input} />
                   </div>
@@ -177,7 +181,7 @@ export default function SchoolsPage() {
                 </p>
               )}
               <Button type="submit" className="mt-5 w-full text-lg" disabled={busy}>
-                {busy ? "Saving…" : mode === "new" ? "Add school" : "Add teacher"}
+                {busy ? "Saving…" : mode === "new" ? "Add school" : mode === "reviewer" ? "Add reviewer" : "Add teacher"}
               </Button>
             </form>
           </Card>
@@ -185,9 +189,13 @@ export default function SchoolsPage() {
           {done && (
             <div ref={doneRef} tabIndex={-1} role="status" className="mt-6 rounded-[var(--radius-card)] border-2 border-cic-dark bg-cic-tint p-5">
               <p className="flex items-center gap-2 font-bold text-cic-darker">
-                <Check aria-hidden className="size-5" /> {done.result.teacher ? `Teacher added to ${done.schoolName}.` : `${done.schoolName} added.`}
+                <Check aria-hidden className="size-5" /> {done.result.account
+                  ? done.result.account.role === "reviewer"
+                    ? "Reviewer added."
+                    : `Teacher added to ${done.schoolName}.`
+                  : `${done.schoolName} added.`}
               </p>
-              {done.result.teacher && (
+              {done.result.account && (
                 <>
                   <p className="mt-2 flex items-center gap-2 text-sm font-bold">
                     <KeyRound aria-hidden className="size-4" /> Share this login now. The password won&apos;t be shown again.
@@ -195,11 +203,11 @@ export default function SchoolsPage() {
                   <dl className="mt-2 rounded-xl bg-white p-3">
                     <div className="flex flex-wrap gap-2">
                       <dt className="font-bold">Email:</dt>
-                      <dd className="font-mono break-all">{done.result.teacher.email}</dd>
+                      <dd className="font-mono break-all">{done.result.account.email}</dd>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <dt className="font-bold">Temporary password:</dt>
-                      <dd className="font-mono">{done.result.teacher.tempPassword}</dd>
+                      <dd className="font-mono">{done.result.account.tempPassword}</dd>
                     </div>
                   </dl>
                   <Button variant="secondary" className="mt-3" onClick={copyLogin}>
@@ -240,6 +248,21 @@ export default function SchoolsPage() {
               );
             })}
             {data.schools.length === 0 && <li className="text-cic-muted">No schools yet. Add the first one.</li>}
+          </ul>
+
+          <h2 className="mt-8 mb-3 text-xl font-bold text-cic-dark">
+            {data.reviewers.length} external reviewer{data.reviewers.length === 1 ? "" : "s"}
+          </h2>
+          <ul className="space-y-2">
+            {data.reviewers.map((r) => (
+              <li key={r.id}>
+                <Card className="p-3">
+                  <p className="font-bold">{r.name}</p>
+                  <p className="text-sm text-cic-muted">{r.email} · read-only curriculum access</p>
+                </Card>
+              </li>
+            ))}
+            {data.reviewers.length === 0 && <li className="text-cic-muted">No reviewers yet.</li>}
           </ul>
         </section>
       </div>
