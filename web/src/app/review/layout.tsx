@@ -4,17 +4,17 @@ import { BookOpen, Eye, LayoutDashboard, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { Button } from "@/components/ui";
-import { introAiCourse } from "@/lib/curriculum/intro-ai";
+import { useCourses } from "@/lib/repo";
 import { signOutTeacher } from "@/lib/teacher-store";
-
-const NAV: NavItem[] = [
-  { href: "/review", label: "Overview", Icon: LayoutDashboard, prefix: false },
-  { href: `/review/module/${introAiCourse.modules[0].id}`, label: "Modules", Icon: BookOpen },
-  { href: "/curriculum", label: "Public catalog", Icon: Eye },
-];
 
 export default function ReviewLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const firstModule = useCourses()[0]?.modules[0]?.id ?? "m1";
+  const nav: NavItem[] = [
+    { href: "/review", label: "Overview", Icon: LayoutDashboard, prefix: false },
+    { href: `/review/module/${firstModule}`, label: "Modules", Icon: BookOpen },
+    { href: "/curriculum", label: "Public catalog", Icon: Eye },
+  ];
 
   async function signOut() {
     await signOutTeacher();
@@ -24,7 +24,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
 
   return (
     <AppShell
-      nav={NAV}
+      nav={nav}
       roleLabel="Reviewer · read only"
       topRight={
         <Button variant="ghost" onClick={signOut}>

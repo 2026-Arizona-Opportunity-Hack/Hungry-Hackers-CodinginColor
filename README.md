@@ -61,6 +61,13 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 | CIC admin | `/login` → `demo.admin@example.com` → `/admin` (every school and cohort, grant-report CSV, add schools and teacher logins). The password is **not public**: `npm run seed:demo` prints it once, or set `DEMO_ADMIN_PASSWORD` in `web/.env.local` first. |
 | Public catalog | `/curriculum` — short read-only catalog, no sign-in |
 
+**What a CIC admin can do** (`/admin`, sign in via the **CIC Admin** button on the home page):
+1. **See every class** across every school and instructor, with an **Open** button to view any class as its teacher does.
+2. **Pull grant numbers** per cohort, school and program: completion and learning gain (wrap-up minus warm-up, per student and per class), calculated by the site. Download a cohort CSV or a per-student CSV.
+3. **Onboard a partner school** (`/admin/schools`): add the school, create its teachers' logins and give external reviewers access. Temporary passwords are shown once.
+4. **Create and publish curriculum** (`/admin/curriculum`): a form-based editor for modules (slides or video, quick check, worksheet, exit question, warm-up and wrap-up quizzes). Edits stay in a private draft until **Publish**; publishing validates the content and can add new modules to existing classes. Python exercises stay developer-edited on purpose.
+5. **Read API for CIC's own dashboard**: `GET /api/v1/cohorts`, protected by `CIC_DASHBOARD_API_KEY`. See [docs/API.md](docs/API.md).
+
 **Who can sign in:** students use a class code (no accounts). Teachers, CIC admins and reviewers sign in with email + password. Roles live in `public.profiles.role` and are only ever set by the server or the seed script, never by users. In the Supabase dashboard (Authentication → Sign In / Providers) turn **off** "Allow new users to sign up" so only admins can create accounts.
 
 Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Students join and save progress through server routes (`/api/join/*`, `/api/progress`) with a signed-in cookie. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).

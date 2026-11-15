@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { summarizeClass, type ClassSummary } from "./admin-analytics";
-import { getCourse } from "./repo";
+import { getCourse, useCurriculumVersion } from "./repo";
 import { ADMIN_DATA_EVENT, fetchAdminData, type AdminData } from "./admin-store";
 
 /** The CIC admin's view of every school and cohort. `undefined` while loading. */
@@ -31,9 +31,11 @@ export function useAdmin() {
     };
   }, []);
 
+  const curriculumVersion = useCurriculumVersion();
   const summaries = useMemo<ClassSummary[]>(
     () => (data ? data.data.classes.map((c) => summarizeClass(c, data.data.progress[c.id] ?? {}, getCourse(c.courseId))) : []),
-    [data],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, curriculumVersion],
   );
   return { data, summaries, error, loadedAt };
 }

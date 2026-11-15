@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { RosterImport } from "@/components/roster-import";
 import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
 import type { RosterParseResult } from "@/lib/csv";
-import { getCourses } from "@/lib/repo";
+import { useCourses } from "@/lib/repo";
 import { createClass } from "@/lib/teacher-store";
 import type { Classroom } from "@/lib/types";
 import { selectClass } from "@/lib/use-teacher";
@@ -13,7 +13,7 @@ import { selectClass } from "@/lib/use-teacher";
 const STEPS = ["Class details", "Add students", "Pick modules", "Share the code"];
 
 export default function NewClassWizard() {
-  const course = getCourses()[0];
+  const course = useCourses()[0];
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [school, setSchool] = useState("");

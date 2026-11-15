@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { introAiCourse } from "@/lib/curriculum/intro-ai";
+import { getPublishedCourse } from "@/lib/curriculum/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { studentFromRequest } from "@/lib/supabase/student-session";
-import type { ActivityResult, Course, StudentProgress } from "@/lib/types";
+import type { ActivityResult, StudentProgress } from "@/lib/types";
 
 /**
  * A signed-in student's own progress. GET loads it (so it follows them to
@@ -10,11 +10,10 @@ import type { ActivityResult, Course, StudentProgress } from "@/lib/types";
  * Teachers read the same rows through row-level security.
  */
 
-const COURSES: Record<string, Course> = { [introAiCourse.id]: introAiCourse };
 const MAX_RESPONSE_CHARS = 20_000;
 
-function activityIds(courseId: string): Set<string> {
-  const course = COURSES[courseId];
+async function activityIds(courseId: string): Promise<Set<string>> {
+  const course = await getPublishedCourse(courseId);
   return new Set(course ? course.modules.flatMap((m) => m.activities.map((a) => a.id)) : []);
 }
 
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const activityId = typeof body?.activityId === "string" ? body.activityId : "";
-  if (!activityIds(me.courseId).has(activityId)) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  if (!(await activityIds(me.courseId)).has(activityId)) return NextResponse.json({ error: "bad_request" }, { status: 400 });
 
   if (body?.type === "failed") {
     const { error } = await db.rpc("increment_failed_check", { p_student_id: me.studentId, p_activity_id: activityId });

@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Lightbulb } from "lucide-react";
 import { Button, Card, EmptyState, LinkButton, Minutes, PageTitle } from "@/components/ui";
-import { introAiCourse as course } from "@/lib/curriculum/intro-ai";
+import { useCourses } from "@/lib/repo";
 import { CONCEPT_LABELS, STAGE_LABELS, type Activity, type ChoiceQuestion } from "@/lib/types";
 
 function Questions({ qs }: { qs: ChoiceQuestion[] }) {
@@ -144,6 +144,7 @@ function Detail({ a }: { a: Activity }) {
 }
 
 export default function ModuleReview() {
+  const course = useCourses()[0];
   const { moduleId } = useParams<{ moduleId: string }>();
   const [allOpen, setAllOpen] = useState(false);
   const index = course.modules.findIndex((m) => m.id === moduleId);

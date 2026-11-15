@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { assignedModules } from "./analytics";
-import { getCourse } from "./repo";
+import { getCourse, useCurriculumVersion } from "./repo";
 import { fetchTeacherData, TEACHER_DATA_EVENT, type TeacherData } from "./teacher-store";
 
 const KEY = "cic.teacher.class.v1";
@@ -60,6 +60,7 @@ export function useTeacherClass() {
     };
   }, []);
 
+  const curriculumVersion = useCurriculumVersion();
   const ctx = useMemo(() => {
     if (!data) return data;
     const cls = data.classes.find((c) => c.id === selected) ?? data.classes[0];
@@ -73,7 +74,9 @@ export function useTeacherClass() {
       progress: data.progress[cls.id] ?? {},
       loadedAt,
     };
-  }, [data, selected, loadedAt]);
+    // curriculumVersion: recompute when the published course arrives or changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, selected, loadedAt, curriculumVersion]);
 
   return { ctx, error };
 }

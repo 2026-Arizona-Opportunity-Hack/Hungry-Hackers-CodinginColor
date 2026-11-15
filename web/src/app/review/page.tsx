@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpenCheck, ExternalLink, Eye, Layers, ShieldCheck, Timer } from "lucide-react";
 import { Card, HeroPanel, Minutes, PageTitle } from "@/components/ui";
-import { introAiCourse as course } from "@/lib/curriculum/intro-ai";
+import { useCourses } from "@/lib/repo";
 import { CONCEPT_LABELS, STAGE_LABELS, type Activity, type ConceptTag } from "@/lib/types";
 
 function questionsOf(a: Activity) {
@@ -11,6 +11,7 @@ function questionsOf(a: Activity) {
 }
 
 export default function ReviewOverview() {
+  const course = useCourses()[0];
   const activities = course.modules.flatMap((m) => m.activities);
   const minutes = activities.reduce((n, a) => n + a.minutes, 0);
   const questions = activities.flatMap(questionsOf).length;

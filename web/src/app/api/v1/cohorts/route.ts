@@ -1,10 +1,9 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { rollup, summarizeClass, type ClassSummary } from "@/lib/admin-analytics";
-import { introAiCourse } from "@/lib/curriculum/intro-ai";
+import { getPublishedCourses } from "@/lib/curriculum/server";
 import { CLASS_SELECT, rowsToTeacherData, type ClassRow } from "@/lib/db-mapping";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import type { Course } from "@/lib/types";
 
 /**
  * Read API for CIC's own org dashboard: completion and learning gain per
@@ -19,7 +18,6 @@ import type { Course } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const COURSES: Record<string, Course> = { [introAiCourse.id]: introAiCourse };
 const MIN_KEY_LENGTH = 24;
 
 const sha = (v: string) => createHash("sha256").update(v).digest();
@@ -86,6 +84,7 @@ export async function GET(request: Request) {
   ]);
   if (classes.error || schools.error) return json({ error: "server_error" }, 500);
 
+  const courses = new Map((await getPublishedCourses()).map((c) => [c.id, c]));
   const data = rowsToTeacherData(classes.data as unknown as ClassRow[]);
   const schoolById = new Map((schools.data as { id: string; name: string; city: string }[]).map((s) => [s.id, s]));
 
@@ -100,7 +99,7 @@ export async function GET(request: Request) {
         schoolId: cls.schoolId ?? null,
         schoolName: sch?.name ?? cls.school,
         city: sch?.city ?? "",
-        summary: summarizeClass(cls, data.progress[cls.id] ?? {}, COURSES[cls.courseId]),
+        summary: summarizeClass(cls, data.progress[cls.id] ?? {}, courses.get(cls.courseId)),
       };
     })
     .filter((r) => (!wantSchool || r.schoolName.toLowerCase() === wantSchool) && (!wantCode || r.summary.cls.code === wantCode));
