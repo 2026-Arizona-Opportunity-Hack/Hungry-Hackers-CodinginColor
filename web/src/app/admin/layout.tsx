@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function signOut() {
     await signOutTeacher();
-    router.replace("/login");
+    router.replace("/");
     router.refresh();
   }
 

@@ -12,13 +12,13 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
   const firstModule = useCourses()[0]?.modules[0]?.id ?? "m1";
   const nav: NavItem[] = [
     { href: "/review", label: "Overview", Icon: LayoutDashboard, prefix: false },
-    { href: `/review/module/${firstModule}`, label: "Modules", Icon: BookOpen },
+    { href: `/review/module/${firstModule}`, label: "Answer keys", Icon: BookOpen },
     { href: "/curriculum", label: "Public catalog", Icon: Eye },
   ];
 
   async function signOut() {
     await signOutTeacher();
-    router.replace("/login");
+    router.replace("/");
     router.refresh();
   }
 

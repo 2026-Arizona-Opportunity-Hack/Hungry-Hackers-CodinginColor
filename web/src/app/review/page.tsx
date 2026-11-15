@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, BookOpenCheck, ExternalLink, Eye, Layers, ShieldCheck, Timer } from "lucide-react";
-import { Card, HeroPanel, Minutes, PageTitle } from "@/components/ui";
+import { Card, HeroPanel, LinkButton, Minutes, PageTitle } from "@/components/ui";
 import { useCourses } from "@/lib/repo";
 import { CONCEPT_LABELS, STAGE_LABELS, type Activity, type ConceptTag } from "@/lib/types";
 
@@ -35,9 +35,14 @@ export default function ReviewOverview() {
         </p>
         <h1 className="mt-1 font-display text-3xl md:text-4xl">{course.title}</h1>
         <p className="mt-2 max-w-prose text-cic-tint">{course.description}</p>
-        <p className="mt-3 flex items-center gap-2 text-sm">
-          <ShieldCheck aria-hidden className="size-5" /> Read-only. No student data, no changes.
-        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <LinkButton href={`/review/module/${course.modules[0]?.id ?? "m1"}`} variant="light">
+            <BookOpenCheck aria-hidden className="size-5" /> Open the answer keys
+          </LinkButton>
+          <p className="flex items-center gap-2 text-sm">
+            <ShieldCheck aria-hidden className="size-5" /> Read-only. No student data, no changes.
+          </p>
+        </div>
       </HeroPanel>
 
       <ul className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
