@@ -104,7 +104,7 @@ export default function ModuleEditor() {
         subtitle="Build the module from top to bottom. Save as you go; students only see it once it's published."
         actions={
           <Button onClick={save} disabled={busy || !dirty}>
-            <Save aria-hidden className="size-4" /> {busy ? "Saving…" : "Save draft"}
+            {busy ? <Loading inline label="Saving" /> : <><Save aria-hidden className="size-4" /> Save draft</>}
           </Button>
         }
       />
@@ -227,7 +227,7 @@ export default function ModuleEditor() {
 
       <div className="mt-6 flex justify-end">
         <Button onClick={save} disabled={busy || !dirty}>
-          <Save aria-hidden className="size-4" /> {busy ? "Saving…" : "Save draft"}
+          {busy ? <Loading inline label="Saving" /> : <><Save aria-hidden className="size-4" /> Save draft</>}
         </Button>
       </div>
     </div>

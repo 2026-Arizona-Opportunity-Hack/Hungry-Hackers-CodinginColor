@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Info, LogIn } from "lucide-react";
-import { Brackets, Button, Logo } from "@/components/ui";
+import { Brackets, Button, Loading, Logo } from "@/components/ui";
 import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "@/lib/demo-accounts";
 import { safeNextPath } from "@/lib/roles";
 import { signInWithPassword } from "@/lib/sign-in";
@@ -109,7 +109,7 @@ export default function LoginPage() {
               </p>
             )}
             <Button type="submit" className="mt-6 w-full text-lg" disabled={busy || !email || !password}>
-              <LogIn aria-hidden className="size-5" /> {busy ? "Signing in…" : "Sign in"}
+              {busy ? <Loading inline label="Signing in" /> : <><LogIn aria-hidden className="size-5" /> Sign in</>}
             </Button>
           </form>
 

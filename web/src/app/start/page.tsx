@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Compass, Infinity as InfinityIcon, Sparkles, UserPlus } from "lucide-react";
-import { Brackets, Button, Logo } from "@/components/ui";
+import { Brackets, Button, Loading, Logo } from "@/components/ui";
 import { signInWithPassword } from "@/lib/sign-in";
 
 const input = "mt-1 block min-h-12 w-full rounded-xl border-2 border-cic-line px-3 focus:border-cic-dark";
@@ -109,7 +109,7 @@ export default function StartPage() {
               </p>
             )}
             <Button type="submit" className="mt-6 w-full text-lg" disabled={busy || !name || !email || !password}>
-              <UserPlus aria-hidden className="size-5" /> {busy ? "Creating your account…" : "Create my account"}
+              {busy ? <Loading inline label="Creating your account" /> : <><UserPlus aria-hidden className="size-5" /> Create my account</>}
             </Button>
           </form>
 

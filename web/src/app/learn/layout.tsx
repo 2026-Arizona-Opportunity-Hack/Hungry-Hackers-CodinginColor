@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { BarChart3, Flame, Home, LogOut, Map, Star } from "lucide-react";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { Loading } from "@/components/ui";
-import { clearSession } from "@/lib/repo";
+import { clearSession, useCurriculumReady } from "@/lib/repo";
 import { useStudent } from "@/lib/use-student";
 
 const NAV: NavItem[] = [
@@ -17,12 +17,13 @@ const NAV: NavItem[] = [
 export default function LearnLayout({ children }: { children: React.ReactNode }) {
   const ctx = useStudent();
   const router = useRouter();
+  const ready = useCurriculumReady();
 
   useEffect(() => {
     if (ctx === null) router.replace("/join");
   }, [ctx, router]);
 
-  if (!ctx) return <Loading label={ctx === null ? "Taking you to sign in…" : "Loading your lessons…"} />;
+  if (!ctx || !ready) return <Loading label={ctx === null ? "Taking you to sign in…" : "Loading your lessons…"} />;
 
   return (
     <AppShell

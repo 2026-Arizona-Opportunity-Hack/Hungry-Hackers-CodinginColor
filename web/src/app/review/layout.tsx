@@ -3,13 +3,14 @@
 import { BookOpen, Eye, LayoutDashboard, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppShell, type NavItem } from "@/components/app-shell";
-import { Button } from "@/components/ui";
-import { useCourses } from "@/lib/repo";
+import { Button, Loading } from "@/components/ui";
+import { useCourses, useCurriculumReady } from "@/lib/repo";
 import { signOutTeacher } from "@/lib/teacher-store";
 
 export default function ReviewLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const firstModule = useCourses()[0]?.modules[0]?.id ?? "m1";
+  const ready = useCurriculumReady();
   const nav: NavItem[] = [
     { href: "/review", label: "Overview", Icon: LayoutDashboard, prefix: false },
     { href: `/review/module/${firstModule}`, label: "Answer keys", Icon: BookOpen },
@@ -32,7 +33,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
         </Button>
       }
     >
-      {children}
+      {ready ? children : <Loading label="Loading the answer keys" />}
     </AppShell>
   );
 }

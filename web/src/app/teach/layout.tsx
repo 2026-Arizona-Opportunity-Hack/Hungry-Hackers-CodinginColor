@@ -4,6 +4,7 @@ import { BarChart3, BookOpen, ChevronDown, LayoutDashboard, LogOut, PlusCircle, 
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell, type NavItem } from "@/components/app-shell";
 import { Button, LinkButton, Loading } from "@/components/ui";
+import { useCurriculumReady } from "@/lib/repo";
 import { signOutTeacher } from "@/lib/teacher-store";
 import { selectClass, useTeacherClass } from "@/lib/use-teacher";
 
@@ -19,7 +20,8 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const path = usePathname();
   const { ctx, error } = useTeacherClass();
-  if (ctx === undefined && !error) return <Loading label="Loading your classes…" />;
+  const ready = useCurriculumReady();
+  if ((ctx === undefined && !error) || !ready) return <Loading label="Loading your classes…" />;
   // The class picker isn't relevant while making a new class.
   const showSwitcher = ctx && path !== "/teach/new";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { setCourses } from "../repo";
+import { announceCurriculumChange, setCourses } from "../repo";
 import type { Activity, ActivityKind, ChoiceQuestion, Course, Module } from "../types";
 
 export interface CurriculumState {
@@ -55,6 +55,7 @@ export async function refreshPublished() {
   try {
     const r = await fetch("/api/curriculum", { cache: "no-store" });
     if (r.ok) setCourses(((await r.json()) as { courses: Course[] }).courses);
+    announceCurriculumChange();
   } catch {
     /* the next page load picks it up */
   }

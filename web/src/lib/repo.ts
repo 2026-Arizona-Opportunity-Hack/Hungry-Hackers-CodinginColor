@@ -63,13 +63,46 @@ function remove(key: string) {
  * request fails.
  */
 let COURSES: Course[] = [introAiCourse];
+let COURSES_JSON = "";
+/** True once the first /api/curriculum request has finished (or failed and we fell back to the code course). */
+let CURRICULUM_READY = false;
 const CURRICULUM_EVENT = "cic-curriculum";
+/** Tabs in the same browser tell each other when an admin publishes, so open screens refresh right away. */
+export const CURRICULUM_CHANNEL = "cic-curriculum";
 
 export function setCourses(courses: Course[]) {
-  if (courses.length === 0) return;
+  if (courses.length === 0) return markCurriculumReady();
+  const json = JSON.stringify(courses);
+  // Polling returns the same content most of the time; don't re-render every screen for nothing.
+  if (json === COURSES_JSON) return markCurriculumReady();
   COURSES = courses;
+  COURSES_JSON = json;
+  CURRICULUM_READY = true;
   window.dispatchEvent(new Event(CURRICULUM_EVENT));
   window.dispatchEvent(new Event(EVENT));
+}
+
+export function markCurriculumReady() {
+  if (CURRICULUM_READY) return;
+  CURRICULUM_READY = true;
+  window.dispatchEvent(new Event(CURRICULUM_EVENT));
+}
+
+/** Tells other open tabs that the published curriculum changed. */
+export function announceCurriculumChange() {
+  try {
+    const ch = new BroadcastChannel(CURRICULUM_CHANNEL);
+    ch.postMessage("changed");
+    ch.close();
+  } catch {
+    /* older browsers: the other tabs catch up on focus or the next poll */
+  }
+}
+
+/** False until the live curriculum has loaded, so screens don't flash "module not found" for brand-new modules. */
+export function useCurriculumReady(): boolean {
+  useCurriculumVersion();
+  return CURRICULUM_READY;
 }
 
 /** Re-renders the caller when the published curriculum arrives or changes. Returns a version to use in effect/memo deps. */

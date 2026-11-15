@@ -181,7 +181,7 @@ export default function SchoolsPage() {
                 </p>
               )}
               <Button type="submit" className="mt-5 w-full text-lg" disabled={busy}>
-                {busy ? "Saving…" : mode === "new" ? "Add school" : mode === "reviewer" ? "Add reviewer" : "Add teacher"}
+                {busy ? <Loading inline label="Saving" /> : mode === "new" ? "Add school" : mode === "reviewer" ? "Add reviewer" : "Add teacher"}
               </Button>
             </form>
           </Card>

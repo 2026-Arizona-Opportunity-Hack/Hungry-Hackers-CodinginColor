@@ -113,14 +113,17 @@ export function Loading({
   inline?: boolean;
 }) {
   const glyph = size === "sm" ? "text-2xl" : "text-4xl";
+  // The animated dots are the ellipsis, so drop one written into the label.
+  const text = label.replace(/(…|\.\.\.)\s*$/, "");
   return (
-    <div role="status" className={cx("flex text-cic-muted", inline ? "items-center gap-2" : "flex-col items-center gap-1 p-8 text-center")}>
-      <span aria-hidden className={cx("font-display leading-none text-cic-dark", inline && "text-lg")}>
+    // Inline loaders take the surrounding text color so they stay visible inside dark buttons.
+    <div role="status" className={cx("flex", inline ? "items-center gap-2" : "flex-col items-center gap-1 p-8 text-center text-cic-muted")}>
+      <span aria-hidden className={cx("font-display leading-none", inline ? "text-lg" : "text-cic-dark")}>
         <span className={cx("inline-block animate-bracket-bounce", !inline && glyph)}>{"<"}</span>
         <span className={cx("inline-block animate-bracket-bounce [animation-delay:200ms]", !inline && glyph)}>{">"}</span>
       </span>
       <span className={cx(!inline && "mt-1 font-bold", inline && "text-sm")}>
-        {label}
+        {text}
         <span aria-hidden>
           <span className="inline-block animate-dot-bounce">.</span>
           <span className="inline-block animate-dot-bounce [animation-delay:200ms]">.</span>
