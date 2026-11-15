@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { cohortsCsv, rollup, studentsCsv, type ClassSummary } from "@/lib/admin-analytics";
 import { pct, signedPct } from "@/lib/analytics";
 import { Button, Card, EmptyState, KpiCard, LinkButton, Loading, PageTitle, ProgressBar } from "@/components/ui";
+import { getCourse } from "@/lib/repo";
 import { selectClass } from "@/lib/use-teacher";
 import { useAdmin } from "@/lib/use-admin";
 
@@ -81,7 +82,7 @@ export default function AdminOverview() {
               onClick={() =>
                 download(
                   `cic-student-report-${today}.csv`,
-                  studentsCsv(rows.map((r) => ({ school: r.school, cls: r.summary.cls, progress: data.data.progress[r.summary.cls.id] ?? {} }))),
+                  studentsCsv(rows.map((r) => ({ school: r.school, cls: r.summary.cls, progress: data.data.progress[r.summary.cls.id] ?? {}, course: getCourse(r.summary.cls.courseId) }))),
                 )
               }
             >

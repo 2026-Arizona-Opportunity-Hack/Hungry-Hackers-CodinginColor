@@ -1,6 +1,5 @@
 import { classGain, courseProgress, assignedModules, studentGain, studentStatus } from "./analytics";
-import { getCourse } from "./repo";
-import type { Classroom, StudentProgress } from "./types";
+import type { Classroom, Course, StudentProgress } from "./types";
 
 /** One cohort (class) rolled up for grant reports. */
 export interface ClassSummary {
@@ -22,8 +21,7 @@ export interface ClassSummary {
   gains: { pre: number; post: number }[];
 }
 
-export function summarizeClass(cls: Classroom, progress: Record<string, StudentProgress>): ClassSummary {
-  const course = getCourse(cls.courseId);
+export function summarizeClass(cls: Classroom, progress: Record<string, StudentProgress>, course: Course | undefined): ClassSummary {
   const modules = course ? assignedModules(course, cls) : [];
   const rows = cls.roster.map((s) => ({ p: progress[s.id], status: studentStatus(progress[s.id], modules).status }));
   const completions = rows.map((r) => courseProgress(r.p, modules));
@@ -132,12 +130,11 @@ export function cohortsCsv(rows: { school: string; city: string; teacher: string
 
 /** One row per student, for grant reports that need per-student learning gain. */
 export function studentsCsv(
-  classes: { school: string; cls: Classroom; progress: Record<string, StudentProgress> }[],
+  classes: { school: string; cls: Classroom; progress: Record<string, StudentProgress>; course: Course | undefined }[],
 ): string {
   const header = ["School", "Class", "Class code", "Student", "Completion %", "Warm-up %", "Wrap-up %", "Learning gain (points)", "Status"];
   const lines: string[] = [];
-  for (const { school, cls, progress } of classes) {
-    const course = getCourse(cls.courseId);
+  for (const { school, cls, progress, course } of classes) {
     const modules = course ? assignedModules(course, cls) : [];
     for (const s of [...cls.roster].sort((a, b) => a.firstName.localeCompare(b.firstName))) {
       const p = progress[s.id];

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { summarizeClass, type ClassSummary } from "./admin-analytics";
+import { getCourse } from "./repo";
 import { ADMIN_DATA_EVENT, fetchAdminData, type AdminData } from "./admin-store";
 
 /** The CIC admin's view of every school and cohort. `undefined` while loading. */
@@ -31,7 +32,7 @@ export function useAdmin() {
   }, []);
 
   const summaries = useMemo<ClassSummary[]>(
-    () => (data ? data.data.classes.map((c) => summarizeClass(c, data.data.progress[c.id] ?? {})) : []),
+    () => (data ? data.data.classes.map((c) => summarizeClass(c, data.data.progress[c.id] ?? {}, getCourse(c.courseId))) : []),
     [data],
   );
   return { data, summaries, error, loadedAt };
