@@ -193,7 +193,11 @@ export default function TeacherOverview() {
       </div>
 
       <p className="mt-6 text-sm">
-        See every student&apos;s status, picture code and learning gain on the{" "}
+        For a heat map of every student and activity, time on task and results worth a second look, open{" "}
+        <Link href="/teach/insights" className="font-bold text-cic-dark underline underline-offset-2">
+          Insights
+        </Link>
+        . See every student&apos;s status, picture code and learning gain on the{" "}
         <Link href="/teach/roster" className="font-bold text-cic-dark underline underline-offset-2">
           roster
         </Link>

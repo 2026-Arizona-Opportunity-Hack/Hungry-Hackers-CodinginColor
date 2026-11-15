@@ -49,7 +49,7 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 
 ## What we built
 
-**CIC Learn** — a self-paced course platform for Coding in Color. A teacher creates a class, uploads a roster CSV and shares one class code. Students join with the code, pick their name and tap a 3-picture code (no email, no passwords), then work through each module on their own: warm-up quiz → slides → quick check → practice or real Python in the browser → exit question → wrap-up quiz. Teachers see live progress, **learning gain** (wrap-up minus warm-up), concept mastery and a "who needs help" list. The first course, *Intro to Artificial Intelligence*, is built from CIC's own slide deck.
+**CIC Learn** — a self-paced course platform for Coding in Color. A teacher creates a class, uploads a roster CSV and shares one class code. Students join with the code, pick their name and tap a 3-picture code (no email, no passwords), then work through each module on their own: warm-up quiz → slides → quick check → practice or real Python in the browser → exit question → wrap-up quiz. Teachers see live progress, **learning gain** (wrap-up minus warm-up), concept mastery and a "who needs help" list. An **Insights** page (`/teach/insights`) adds a student × activity heat map (score or time on task), activity per day, time per module against the estimate, and a "worth a look" list that flags very fast, back-to-back or suspiciously sudden results as conversation starters, not proof of cheating. The first course, *Intro to Artificial Intelligence*, is built from CIC's own slide deck.
 
 **Try the demo** (`npm run dev`, then open http://localhost:3000):
 
@@ -59,7 +59,7 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 | Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes |
 | Reviewer | `/curriculum` — read-only catalog, no student data |
 
-Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Student join and progress still use browser storage; moving them behind server routes is next. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
+Status: teacher sign-in and the teacher dashboard run on Supabase (Postgres + row-level security). Students join and save progress through server routes (`/api/join/*`, `/api/progress`) with a signed-in cookie. Design decisions: [`docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md`](docs/superpowers/specs/2026-11-14-cic-learning-platform-design.md).
 
 ## Tech stack
 

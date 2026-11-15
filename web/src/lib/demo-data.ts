@@ -63,6 +63,12 @@ const COMPLETED = [24, 21, 18, 12, 20, 24, 15, 9, 18, 0, 17, 13, 24, 18, 6, 19, 
 /** Students who hit the "stuck" rule: index -> reason. */
 const STUCK_FAILS: Record<number, number> = { 1: 4, 3: 3, 10: 3 };
 const IDLE_DAYS: Record<number, number> = { 7: 5, 14: 4 };
+/**
+ * Students who raced through one module (index -> module index), so the
+ * teacher Insights page has something "worth a look" in the demo:
+ * seconds per activity, finished back to back, with a perfect wrap-up quiz.
+ */
+const RUSHED_MODULE: Record<number, number> = { 5: 2, 19: 1 };
 
 function buildProgress(): Record<string, StudentProgress> {
   const now = Date.now();
@@ -77,15 +83,20 @@ function buildProgress(): Record<string, StudentProgress> {
     const base = now - idle * DAY_MS;
 
     activities.slice(0, done).forEach((a, k) => {
-      const completedAt = new Date(base - (done - k) * 3_600_000 * 6).toISOString();
+      const mod = introAiCourse.modules.find((m) => m.activities.includes(a))!;
+      const rushed = RUSHED_MODULE[i] === introAiCourse.modules.indexOf(mod);
+      const first = activities.indexOf(mod.activities[0]);
+      const completedAt = rushed
+        ? new Date(base - (done - first) * 3_600_000 * 6 + (k - first) * 40_000).toISOString()
+        : new Date(base - (done - k) * 3_600_000 * 6).toISOString();
       const res: ActivityResult = {
         activityId: a.id,
         completedAt,
         attempts: 1,
-        secondsOnTask: Math.round(60 * a.minutes * (0.7 + r() * 0.8)),
+        secondsOnTask: rushed ? Math.round(6 + r() * 14) : Math.round(60 * a.minutes * (0.7 + r() * 0.8)),
       };
       if (a.kind === "pretest" || a.kind === "posttest") {
-        const pCorrect = a.kind === "pretest" ? 0.3 + r() * 0.3 : 0.7 + r() * 0.3;
+        const pCorrect = rushed && a.kind === "posttest" ? 1 : a.kind === "pretest" ? 0.3 + r() * 0.3 : 0.7 + r() * 0.3;
         const answers = a.questions.map((q) =>
           r() < pCorrect ? q.answerIndex : (q.answerIndex + 1 + Math.floor(r() * 3)) % q.choices.length,
         );
