@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, Lock, PartyPopper, Timer, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, Lock, PartyPopper, RotateCcw, Timer, TrendingUp } from "lucide-react";
 import { CheckActivity, ExitActivity, QuizActivity, SlidesActivity, WorksheetActivity, type Completion } from "@/components/activities";
 import { CodeActivity } from "@/components/code-activity";
 import { Confetti } from "@/components/confetti";
@@ -68,8 +68,13 @@ export default function LessonPlayer() {
   const ctx = useStudent();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [justFinished, setJustFinished] = useState(false);
-  // A finished activity the student opened again to look back at. Nothing is saved in review.
+  // A finished activity the student opened again. `mode` is "look" (read the
+  // old answers, nothing saved) or "redo" (try again; the best score is kept).
+  const redoStartedAt = useRef(0);
   const [reviewId, setReviewId] = useState<string | null>(null);
+  const [reviewMode, setReviewMode] = useState<"look" | "redo">("look");
+  // Bumps every redo submit so the activity remounts fresh.
+  const [redoCount, setRedoCount] = useState(0);
 
   const mod = ctx?.modules.find((m) => m.id === moduleId);
   const index = mod ? mod.activities.findIndex((a) => !isDone(ctx?.progress, a.id)) : -1;
@@ -81,8 +86,12 @@ export default function LessonPlayer() {
     headingRef.current?.focus();
   }, [current?.id, reviewId]);
 
-  // Switching modules leaves review mode.
-  useEffect(() => setReviewId(null), [moduleId]);
+  // Switching modules or looking at a different activity leaves redo mode.
+  useEffect(() => {
+    setReviewId(null);
+    setReviewMode("look");
+  }, [moduleId]);
+  useEffect(() => setReviewMode("look"), [reviewId]);
 
   if (!ctx) return <Loading />;
   const { cls, student, modules, progress } = ctx;
@@ -127,6 +136,39 @@ export default function LessonPlayer() {
   }
 
   const failed = () => current && recordFailedCheck(cls.id, student.id, current.id);
+  /** Wrong answers during a redo still tell the teacher the student needs help. */
+  const failedFor = (a: Activity) => () => recordFailedCheck(cls.id, student.id, a.id);
+
+  /** Start a redo of a finished activity: show it fresh, keep the old score until submit. */
+  function startRedo(a: Activity) {
+    redoStartedAt.current = Date.now();
+    setReviewId(a.id);
+    setReviewMode("redo");
+    window.scrollTo({ top: 0 });
+  }
+
+  /**
+   * Submit a redo. The best score wins: a worse retry never lowers a grade,
+   * and the new answer is only saved when it counts.
+   */
+  function completeRedo(a: Activity, c: Completion) {
+    const old = progress.results[a.id];
+    const best = (x: number | undefined, y: number | undefined) => Math.max(x ?? 0, y ?? 0);
+    recordResult(cls.id, student.id, {
+      activityId: a.id,
+      completedAt: new Date().toISOString(),
+      score:
+        old?.score !== undefined || c.score !== undefined
+          ? best(old?.score, c.score)
+          : undefined,
+      attempts: (old?.attempts ?? 0) + c.attempts,
+      secondsOnTask: (old?.secondsOnTask ?? 0) + Math.round((Date.now() - redoStartedAt.current) / 1000),
+      response: (c.score ?? 0) >= (old?.score ?? 0) ? c.response : old?.response,
+    });
+    setRedoCount((n) => n + 1);
+    if (a.kind === "posttest") setJustFinished(true);
+    leaveReview();
+  }
   const nextModule = modules[modIndex + 1];
   const prevModule = modules[modIndex - 1];
   const gain = moduleGain(progress, mod);
@@ -201,22 +243,64 @@ export default function LessonPlayer() {
       </ol>
 
       {reviewing ? (
-        <div key={`review-${reviewing.id}`} className="mt-6 animate-rise">
+        <div key={`review-${reviewing.id}-${reviewMode}-${redoCount}`} className="mt-6 animate-rise">
           <div role="status" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-cic-tint p-4">
-            <p className="font-bold text-cic-darker">Reviewing a finished activity. Nothing here changes your saved work.</p>
-            <Button variant="secondary" onClick={leaveReview}>
-              {current ? "Back to where I left off" : "Done reviewing"}
-            </Button>
+            {reviewMode === "redo" ? (
+              <p className="font-bold text-cic-darker">
+                Redoing for real — your best score is kept, so a worse try can&apos;t hurt you.
+              </p>
+            ) : (
+              <p className="font-bold text-cic-darker">
+                Looking back at a finished activity{progress.results[reviewing.id]?.score !== undefined && (
+                  <> · best score {Math.round((progress.results[reviewing.id].score ?? 0) * 100)}%</>
+                )}
+                . Nothing here changes your saved work.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {reviewMode === "look" ? (
+                <Button onClick={() => startRedo(reviewing)}>
+                  <RotateCcw aria-hidden className="size-5" /> Redo this activity
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => setReviewMode("look")}>
+                  Back to looking
+                </Button>
+              )}
+              <Button variant="secondary" onClick={leaveReview}>
+                {current ? "Back to where I left off" : "Done reviewing"}
+              </Button>
+            </div>
           </div>
           <h1 ref={headingRef} tabIndex={-1} className="mb-5 font-display text-2xl text-cic-dark md:text-3xl">
             {reviewing.title}
           </h1>
-          {reviewing.kind === "slides" && <SlidesActivity activity={reviewing} onComplete={leaveReview} />}
-          {(reviewing.kind === "pretest" || reviewing.kind === "posttest") && <QuizActivity activity={reviewing} onComplete={leaveReview} />}
-          {reviewing.kind === "check" && <CheckActivity activity={reviewing} onComplete={leaveReview} onFailedCheck={() => {}} />}
-          {reviewing.kind === "worksheet" && <WorksheetActivity activity={reviewing} onComplete={leaveReview} />}
-          {reviewing.kind === "code" && <CodeActivity activity={reviewing} onComplete={leaveReview} onFailedCheck={() => {}} />}
-          {reviewing.kind === "exit" && <ExitActivity activity={reviewing} onComplete={leaveReview} />}
+          {reviewing.kind === "slides" && (
+            <SlidesActivity activity={reviewing} onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview} />
+          )}
+          {(reviewing.kind === "pretest" || reviewing.kind === "posttest") && (
+            <QuizActivity activity={reviewing} onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview} />
+          )}
+          {reviewing.kind === "check" && (
+            <CheckActivity
+              activity={reviewing}
+              onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview}
+              onFailedCheck={reviewMode === "redo" ? failedFor(reviewing) : () => {}}
+            />
+          )}
+          {reviewing.kind === "worksheet" && (
+            <WorksheetActivity activity={reviewing} onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview} />
+          )}
+          {reviewing.kind === "code" && (
+            <CodeActivity
+              activity={reviewing}
+              onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview}
+              onFailedCheck={reviewMode === "redo" ? failedFor(reviewing) : () => {}}
+            />
+          )}
+          {reviewing.kind === "exit" && (
+            <ExitActivity activity={reviewing} onComplete={reviewMode === "redo" ? (c) => completeRedo(reviewing, c) : leaveReview} />
+          )}
         </div>
       ) : current ? (
         <div key={current.id} className="mt-6 animate-rise">
