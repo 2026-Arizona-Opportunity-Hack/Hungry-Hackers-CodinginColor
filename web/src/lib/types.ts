@@ -166,4 +166,7 @@ export interface Classroom {
   assignedModuleIds: string[];
   roster: RosterStudent[];
   createdAt: string;
+  /** Set for classes stored in Supabase; used by the admin roll-ups. */
+  schoolId?: string | null;
+  teacherId?: string;
 }

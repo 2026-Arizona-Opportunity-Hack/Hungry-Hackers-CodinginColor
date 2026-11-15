@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { CurriculumLoader } from "@/components/curriculum-loader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to main content
         </a>
+        <CurriculumLoader />
         {children}
       </body>
     </html>

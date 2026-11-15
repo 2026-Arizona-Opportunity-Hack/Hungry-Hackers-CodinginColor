@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { Logo, Minutes } from "@/components/ui";
+import { getPublishedCourse } from "@/lib/curriculum/server";
 import { introAiCourse } from "@/lib/curriculum/intro-ai";
 import { CONCEPT_LABELS, STAGE_LABELS, type Activity } from "@/lib/types";
 
@@ -28,8 +29,10 @@ function activityDetail(a: Activity): string {
   }
 }
 
-export default function Curriculum() {
-  const course = introAiCourse;
+export const dynamic = "force-dynamic";
+
+export default async function Curriculum() {
+  const course = (await getPublishedCourse(introAiCourse.id)) ?? introAiCourse;
   const total = course.modules.reduce((n, m) => n + m.activities.reduce((k, a) => k + a.minutes, 0), 0);
 
   return (

@@ -55,7 +55,38 @@ function remove(key: string) {
 
 // ---------- curriculum ----------
 
-const COURSES: Course[] = [introAiCourse];
+/**
+ * Starts as the course that ships in code, then is replaced by the published
+ * copy from /api/curriculum (see CurriculumLoader), so edits made in the admin
+ * curriculum editor reach every screen. Falls back to the code course if that
+ * request fails.
+ */
+let COURSES: Course[] = [introAiCourse];
+const CURRICULUM_EVENT = "cic-curriculum";
+
+export function setCourses(courses: Course[]) {
+  if (courses.length === 0) return;
+  COURSES = courses;
+  window.dispatchEvent(new Event(CURRICULUM_EVENT));
+  window.dispatchEvent(new Event(EVENT));
+}
+
+/** Re-renders the caller when the published curriculum arrives or changes. Returns a version to use in effect/memo deps. */
+export function useCurriculumVersion(): number {
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setVersion((v) => v + 1);
+    window.addEventListener(CURRICULUM_EVENT, bump);
+    return () => window.removeEventListener(CURRICULUM_EVENT, bump);
+  }, []);
+  return version;
+}
+
+/** The current course list, kept fresh. */
+export function useCourses(): Course[] {
+  useCurriculumVersion();
+  return COURSES;
+}
 
 export function getCourses(): Course[] {
   return COURSES;

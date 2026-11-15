@@ -77,6 +77,9 @@ export default function Welcome() {
             <Link href="/teach" className="rounded-xl px-3 py-2 text-cic-dark hover:bg-cic-tint">
               For teachers
             </Link>
+            <Link href="/admin" className="rounded-xl px-3 py-2 text-cic-dark hover:bg-cic-tint">
+              Admin
+            </Link>
           </nav>
         </div>
       </header>
@@ -98,6 +101,9 @@ export default function Welcome() {
                 </LinkButton>
                 <LinkButton href="/teach" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
                   <GraduationCap aria-hidden className="size-5" /> I&apos;m a teacher
+                </LinkButton>
+                <LinkButton href="/admin" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
+                  <ShieldCheck aria-hidden className="size-5" /> CIC Admin
                 </LinkButton>
               </div>
               <p className="mt-5 flex items-center gap-2 text-cic-tint">
@@ -134,12 +140,15 @@ export default function Welcome() {
         <section className="mx-auto max-w-6xl px-4 pb-16">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-[24px] bg-cic-tint p-6 md:p-8">
             <div>
-              <h2 className="font-display text-2xl text-cic-darker">District partner or reviewer?</h2>
-              <p className="mt-1 text-cic-muted">Browse every module and quiz question without signing in.</p>
+              <h2 className="font-display text-2xl text-cic-darker">Are you an external reviewer?</h2>
+              <p className="mt-1 text-cic-muted">Browse every module and quiz question without signing in, or sign in to review the full curriculum with answer keys.</p>
             </div>
-            <LinkButton href="/curriculum" variant="secondary">
-              Browse curriculum
-            </LinkButton>
+            <div className="flex flex-wrap gap-3">
+              <LinkButton href="/curriculum" variant="secondary">
+                Browse curriculum
+              </LinkButton>
+              <LinkButton href="/review">Reviewer sign in</LinkButton>
+            </div>
           </div>
         </section>
       </main>
