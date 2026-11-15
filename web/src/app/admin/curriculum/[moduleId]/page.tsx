@@ -174,7 +174,13 @@ export default function ModuleEditor() {
                       </div>
                     )}
                     {(a.kind === "pretest" || a.kind === "posttest" || a.kind === "check") && (
-                      <QuestionsEditor questions={a.questions} locked={locked} onChange={(questions) => setActivity(i, { ...a, questions })} />
+                      <QuestionsEditor
+                        questions={a.questions}
+                        locked={locked}
+                        feedback={a.kind !== "pretest"}
+                        max={a.kind === "check" ? 1 : 12}
+                        onChange={(questions) => setActivity(i, { ...a, questions })}
+                      />
                     )}
                     {a.kind === "slides" && <SlidesEditor a={a} onChange={(x) => setActivity(i, x)} />}
                     {a.kind === "worksheet" && <WorksheetEditor a={a} onChange={(x) => setActivity(i, x)} />}

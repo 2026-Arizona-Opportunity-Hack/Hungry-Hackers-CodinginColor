@@ -72,7 +72,8 @@ function int(v: unknown, min: number, max: number, fallback: number): number {
   return typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(min, Math.round(v))) : fallback;
 }
 
-function question(raw: unknown, where: string, errors: E): ChoiceQuestion | null {
+/** `feedback` is false for warm-up questions: students get no hint or explanation there, so none is required. */
+function question(raw: unknown, where: string, errors: E, feedback: boolean): ChoiceQuestion | null {
   if (!isRec(raw)) {
     errors.hard.push(`${where}: not a question.`);
     return null;
@@ -93,15 +94,15 @@ function question(raw: unknown, where: string, errors: E): ChoiceQuestion | null
     choices,
     answerIndex,
     concept: concept ?? "what-is-ai",
-    hint: str(raw.hint, 400, `${where}, hint`, errors, { required: true }),
-    explanation: str(raw.explanation, 400, `${where}, explanation`, errors, { required: true }),
+    hint: str(raw.hint, 400, `${where}, hint`, errors, { required: feedback }),
+    explanation: str(raw.explanation, 400, `${where}, explanation`, errors, { required: feedback }),
   };
 }
 
-function questions(raw: unknown, where: string, errors: E): ChoiceQuestion[] {
+function questions(raw: unknown, where: string, errors: E, feedback: boolean): ChoiceQuestion[] {
   const list = arr(raw);
   if (list.length > 12) errors.hard.push(`${where}: 12 questions max.`);
-  const out = list.map((q, i) => question(q, `${where}, question ${i + 1}`, errors)).filter((q): q is ChoiceQuestion => q !== null);
+  const out = list.map((q, i) => question(q, `${where}, question ${i + 1}`, errors, feedback)).filter((q): q is ChoiceQuestion => q !== null);
   const ids = new Set<string>();
   for (const q of out) {
     if (ids.has(q.id)) errors.hard.push(`${where}: two questions share an id.`);
@@ -131,7 +132,7 @@ function activity(raw: unknown, where: string, errors: E, trustedCode: Map<strin
     case "pretest":
     case "posttest":
     case "check": {
-      const qs = questions(raw.questions, where, errors);
+      const qs = questions(raw.questions, where, errors, kind !== "pretest");
       if (qs.length === 0) errors.soft.push(`${where}: add at least one question.`);
       return { ...base, kind, questions: qs } as Activity;
     }
