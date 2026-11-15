@@ -26,6 +26,16 @@ export function isDone(p: StudentProgress | undefined, activityId: string): bool
   return Boolean(p?.results[activityId]);
 }
 
+/** Skipped for later — still counts as NOT done, but doesn't block what's next. */
+export function isSkipped(p: StudentProgress | undefined, activityId: string): boolean {
+  return Boolean(p?.skippedIds?.includes(activityId));
+}
+
+/** Undone activities in a module that the student skipped and should come back to. */
+export function skippedActivities(p: StudentProgress | undefined, m: Module) {
+  return m.activities.filter((a) => !isDone(p, a.id) && isSkipped(p, a.id));
+}
+
 export function moduleComplete(p: StudentProgress | undefined, m: Module): boolean {
   return m.activities.every((a) => isDone(p, a.id));
 }
@@ -45,14 +55,21 @@ export function activityUnlocked(p: StudentProgress | undefined, m: Module, acti
   return activityIndex === 0 || isDone(p, m.activities[activityIndex - 1].id);
 }
 
-/** Where should this student pick up? Used for the late-joiner "Start here" banner. */
+/**
+ * Where should this student pick up? Used for the late-joiner "Start here" banner.
+ * Skipped activities don't block: we point at the first undone, unskipped
+ * activity — or, when only skipped ones remain, the first skipped one, so
+ * "Up next" becomes "come back to this".
+ */
 export function nextStep(
   p: StudentProgress | undefined,
   modules: Module[],
 ): { module: Module; activity: Activity; activityIndex: number } | null {
   for (const m of modules) {
-    const i = m.activities.findIndex((a) => !isDone(p, a.id));
+    const i = m.activities.findIndex((a) => !isDone(p, a.id) && !isSkipped(p, a.id));
     if (i !== -1) return { module: m, activity: m.activities[i], activityIndex: i };
+    const j = m.activities.findIndex((a) => !isDone(p, a.id));
+    if (j !== -1) return { module: m, activity: m.activities[j], activityIndex: j };
   }
   return null;
 }

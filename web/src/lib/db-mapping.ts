@@ -64,6 +64,8 @@ function toProgress(s: StudentRow): StudentProgress {
     lastActiveAt: s.last_active_at,
     failedChecks: Object.fromEntries(s.failed_checks.map((f) => [f.activity_id, f.count])),
     streakDays: s.streak_days,
+    // Skips live on the student's device only — never synced to the server.
+    skippedIds: [],
   };
 }
 

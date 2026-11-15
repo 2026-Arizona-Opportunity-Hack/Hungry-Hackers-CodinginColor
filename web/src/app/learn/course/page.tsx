@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, Lock } from "lucide-react";
+import { Check, ChevronRight, FastForward, Lock } from "lucide-react";
 import { HeroPanel, Loading, ProgressBar, cx } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
-import { moduleComplete, moduleDoneCount, moduleUnlocked } from "@/lib/analytics";
+import { isDone, isSkipped, moduleComplete, moduleDoneCount, moduleUnlocked } from "@/lib/analytics";
 import { useStudent } from "@/lib/use-student";
 
 export default function CourseRoadmap() {
@@ -53,21 +53,24 @@ export default function CourseRoadmap() {
               </div>
               <p className="mt-1 text-cic-muted">{m.summary}</p>
               <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Activities">
-                {m.activities.map((a, ai) => {
-                  const Icon = STAGE_ICONS[a.kind];
-                  const isDone = ai < count;
+                {m.activities.map((a) => {
+                  const done = isDone(progress, a.id);
+                  const skipped = !done && isSkipped(progress, a.id);
+                  const Icon = skipped ? FastForward : STAGE_ICONS[a.kind];
                   return (
                     <li
                       key={a.id}
-                      title={a.title}
+                      title={skipped ? `${a.title} (skipped — come back later)` : a.title}
                       className={cx(
                         "grid size-8 place-items-center rounded-lg",
-                        isDone ? "bg-cic-green text-white" : "bg-cic-tint text-cic-dark",
+                        done && "bg-cic-green text-white",
+                        !done && !skipped && "bg-cic-tint text-cic-dark",
+                        skipped && "border-2 border-dashed border-cic-warn bg-cic-warn-bg text-cic-warn",
                       )}
                     >
                       <Icon aria-hidden className="size-4" />
                       <span className="sr-only">
-                        {a.title} {isDone ? "(done)" : ""}
+                        {a.title} {done ? "(done)" : skipped ? "(skipped)" : ""}
                       </span>
                     </li>
                   );

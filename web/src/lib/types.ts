@@ -153,6 +153,8 @@ export interface StudentProgress {
   /** Wrong answers on checks, by activity — used for the "stuck" rule. */
   failedChecks: Record<string, number>;
   streakDays: number;
+  /** Activities the student skipped for later. Still count as NOT done. */
+  skippedIds: string[];
 }
 
 export interface Classroom {

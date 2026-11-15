@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Flame, Map, PartyPopper, Star, Users } from "lucide-react";
 import { Card, HeroPanel, LinkButton, Loading, Minutes } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
-import { courseProgress, moduleComplete, moduleDoneCount, nextStep } from "@/lib/analytics";
+import { courseProgress, moduleComplete, moduleDoneCount, nextStep, skippedActivities } from "@/lib/analytics";
 import { getClassProgress } from "@/lib/repo";
 import { STAGE_LABELS } from "@/lib/types";
 import { useStudent } from "@/lib/use-student";
@@ -18,6 +18,10 @@ export default function StudentHome() {
   const started = Object.keys(progress.results).length > 0;
   const overall = courseProgress(progress, modules);
   const doneModules = modules.filter((m) => moduleComplete(progress, m)).length;
+  // Undone activities the student skipped, grouped under their module.
+  const skippedByModule = modules
+    .map((m) => ({ module: m, skipped: skippedActivities(progress, m) }))
+    .filter((g) => g.skipped.length > 0);
 
   // Where is most of the class? Shown to reassure late joiners.
   const classmates = Object.values(getClassProgress(cls)).filter((p) => p.studentId !== student.id);
@@ -135,6 +139,41 @@ export default function StudentHome() {
               );
             })}
           </ol>
+        </section>
+      )}
+
+      {skippedByModule.length > 0 && (
+        <section aria-labelledby="comeback" className="mt-8">
+          <h2 id="comeback" className="font-display text-2xl text-cic-dark">
+            Come back to {skippedByModule.reduce((n, g) => n + g.skipped.length, 0) === 1 ? "this" : "these"} when you&apos;re ready
+          </h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {skippedByModule.map(({ module, skipped }) =>
+              skipped.map((a) => {
+                const Icon = STAGE_ICONS[a.kind];
+                return (
+                  <li key={a.id}>
+                    <Card className="h-full border-dashed border-cic-warn">
+                      <div className="flex items-center gap-3">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-cic-warn-bg text-cic-warn">
+                          <Icon aria-hidden className="size-6" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-cic-muted">
+                            Module {module.number} · {STAGE_LABELS[a.kind]} · skipped
+                          </p>
+                          <p className="truncate font-bold">{a.title}</p>
+                        </div>
+                      </div>
+                      <LinkButton href={`/learn/lesson/${module.id}`} variant="secondary" className="mt-3 w-full">
+                        Go back to it <ArrowRight aria-hidden className="size-5" />
+                      </LinkButton>
+                    </Card>
+                  </li>
+                );
+              }),
+            )}
+          </ul>
         </section>
       )}
 
