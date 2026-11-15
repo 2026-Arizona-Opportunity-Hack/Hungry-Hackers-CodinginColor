@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RosterImport } from "@/components/roster-import";
-import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
+import { Button, Card, LinkButton, Loading, PageTitle, cx } from "@/components/ui";
 import type { RosterParseResult } from "@/lib/csv";
 import { useCourses } from "@/lib/repo";
 import { createClass } from "@/lib/teacher-store";
@@ -184,7 +184,13 @@ export default function NewClassWizard() {
               <ArrowLeft aria-hidden className="size-4" /> Back
             </Button>
             <Button onClick={next} disabled={saving}>
-              {step === 2 ? (saving ? "Saving…" : "Create class") : "Next"} <ArrowRight aria-hidden className="size-4" />
+              {step === 2 && saving ? (
+                <Loading inline label="Creating class" />
+              ) : (
+                <>
+                  {step === 2 ? "Create class" : "Next"} <ArrowRight aria-hidden className="size-4" />
+                </>
+              )}
             </Button>
           </div>
         )}

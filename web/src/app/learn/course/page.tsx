@@ -76,6 +76,9 @@ export default function CourseRoadmap() {
               {current && count > 0 && (
                 <ProgressBar className="mt-3" value={count / m.activities.length} label={`Module ${m.number}: ${count} of ${m.activities.length} activities`} />
               )}
+              {done && (
+                <p className="mt-3 text-sm font-bold text-cic-dark">Finished — open to review any part or redo it.</p>
+              )}
             </div>
           );
 

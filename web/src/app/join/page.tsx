@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Delete, Info, ShieldCheck } from "lucide-react";
-import { Brackets, Button, Logo, cx } from "@/components/ui";
+import { Brackets, Button, Loading, Logo, cx } from "@/components/ui";
 import { PICTURES, pictureName, sameCode } from "@/lib/picture-codes";
 import { findClassByCode, loadServerProgress, setJoinedClass, setSession } from "@/lib/repo";
 import { DEMO_CLASS_CODE, DEMO_STUDENT } from "@/lib/demo-data";
@@ -190,7 +190,13 @@ export default function JoinPage() {
                 </p>
               )}
               <Button type="submit" className="mt-6 w-full text-lg" disabled={busy || code.trim().length < 4}>
-                Next <ArrowRight aria-hidden className="size-5" />
+                {busy ? (
+                  <Loading inline label="Finding your class" />
+                ) : (
+                  <>
+                    Next <ArrowRight aria-hidden className="size-5" />
+                  </>
+                )}
               </Button>
             </form>
           )}
@@ -250,6 +256,12 @@ export default function JoinPage() {
                   </span>
                 ))}
               </div>
+
+              {busy && (
+                <div className="mt-4 rounded-xl bg-cic-tint p-3">
+                  <Loading inline label="Checking your pictures" />
+                </div>
+              )}
 
               {error && (
                 <p role="alert" className="mt-4 rounded-lg bg-cic-danger-bg p-3 text-center text-cic-danger">

@@ -38,6 +38,8 @@
   --animate-shake: shake 380ms ease-in-out both;
   --animate-grow: grow 700ms var(--ease-out-soft) both;
   --animate-grow-up: grow-up 700ms var(--ease-out-soft) both;
+  --animate-bracket-bounce: bracket-bounce 900ms var(--ease-out-soft) infinite;
+  --animate-dot-bounce: dot-bounce 1200ms ease-in-out infinite;
 
   @keyframes rise {
     from { opacity: 0; transform: translateY(8px); }
@@ -62,6 +64,16 @@
   @keyframes grow-up {
     from { transform: scaleY(0); }
     to { transform: scaleY(1); }
+  }
+  /* Brand loader: the two code-tag brackets hop in alternation. */
+  @keyframes bracket-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  /* Brand loader: typing-dot pulse for the label ellipsis. */
+  @keyframes dot-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
   }
 }
 
