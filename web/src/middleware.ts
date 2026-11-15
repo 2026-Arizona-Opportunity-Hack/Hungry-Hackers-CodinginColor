@@ -1,9 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { asRole, canOpen, homeFor } from "@/lib/roles";
 
 /**
  * Keeps the teacher's Supabase session fresh and sends signed-out visitors
- * from /teach/* to /login. (Students never touch /teach.)
+ * from /teach, /admin and /review to /login, then keeps each role in its own
+ * area. (Students never sign in; they join with a class code.)
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -25,22 +27,27 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  if (!user && pathname.startsWith("/teach")) {
-    const login = request.nextUrl.clone();
-    login.pathname = "/login";
-    login.search = "";
-    login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+  const redirect = (to: string, next?: string) => {
+    const url = request.nextUrl.clone();
+    url.pathname = to;
+    url.search = "";
+    if (next) url.searchParams.set("next", next);
+    return NextResponse.redirect(url);
+  };
+
+  if (!user) {
+    return pathname === "/login" ? response : redirect("/login", pathname);
   }
-  if (user && pathname === "/login") {
-    const dest = request.nextUrl.clone();
-    dest.pathname = "/teach";
-    dest.search = "";
-    return NextResponse.redirect(dest);
-  }
+
+  // Signed in: send people to their own area. (This is the friendly layer; the
+  // database's row-level security and the API routes do the real enforcing.)
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  const role = asRole(profile?.role);
+  if (pathname === "/login") return redirect(homeFor(role));
+  if (!canOpen(role, pathname)) return redirect(homeFor(role));
   return response;
 }
 
 export const config = {
-  matcher: ["/teach/:path*", "/login"],
+  matcher: ["/teach/:path*", "/admin/:path*", "/review/:path*", "/login"],
 };
