@@ -39,7 +39,8 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
 
   return (
     <AppShell
-      nav={NAV}
+      // The AI assistant is for real teacher accounts only, not the shared demo login.
+      nav={demo ? NAV.filter((n) => n.href !== "/teach/assistant") : NAV}
       roleLabel="Teacher"
       topRight={
         <>

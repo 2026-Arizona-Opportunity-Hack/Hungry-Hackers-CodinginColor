@@ -4,6 +4,7 @@ import { Send, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button, Card, EmptyState, LinkButton, Loading, PageTitle } from "@/components/ui";
 import { LoadProblem, NoClasses } from "@/components/teacher-states";
+import { isDemoTeacher } from "@/lib/teacher-store";
 import { useTeacherClass } from "@/lib/use-teacher";
 
 const SUGGESTIONS = [
@@ -28,8 +29,10 @@ export default function ClassAssistant() {
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
+  const [demo, setDemo] = useState(false);
 
   useEffect(() => {
+    isDemoTeacher().then(setDemo, () => setDemo(false));
     fetch("/api/teacher/ask")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -43,6 +46,13 @@ export default function ClassAssistant() {
   if (error) return <LoadProblem message={error} />;
   if (ctx === undefined) return <Loading />;
   if (ctx === null) return <NoClasses />;
+  if (demo) {
+    return (
+      <EmptyState title="Not available on the demo account" action={<LinkButton href="/teach">Back to Overview</LinkButton>}>
+        The class assistant is for real teacher accounts only.
+      </EmptyState>
+    );
+  }
   const { cls } = ctx;
 
   async function ask(q: string) {
