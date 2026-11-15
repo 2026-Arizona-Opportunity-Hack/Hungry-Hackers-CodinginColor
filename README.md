@@ -56,10 +56,10 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 | Role | How |
 |---|---|
 | Self-learner | `/start` → create an account → `/learn` (every module open) · sign back in at `/login?next=/learn` |
-| Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉 |
-| Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes |
-| External reviewer | `/login` → trial reviewer `demo.reviewer@example.com` / `CICreview-2026!` → `/review` (curriculum with answer keys, read-only, no student data) |
-| CIC admin | `/login` → trial admin `demo.admin@example.com` / `CICadmin-2026!` → `/admin` (every school and cohort, grant-report CSVs, curriculum editor with publishing, add schools and accounts). **Full powers and a public password: rotate or delete this account after the demo.** A second admin, `cic.admin@example.com`, has a private password (`npm run seed:demo` prints it once, or set `DEMO_ADMIN_PASSWORD` in `web/.env.local` first). |
+| Student | `/join` → class code **MVH3AI** → **Jordan M.** → tap 🦊 🐢 🦉. The sample class runs in the browser only: nothing is saved to the server, and it starts over from the sample data on every join and on **Leave**. |
+| Teacher | `/teach` redirects to `/login` — use the trial account shown there (`demo.teacher@example.com`, a public sample login) for the Maryvale cohort of 24 students · `/teach/new` to create a class in under 10 minutes. New classes and students made with this trial account stay in that browser only and are wiped at every sign-in and sign-out, so each visitor starts fresh. |
+| External reviewer | `/login?next=/review` with the demo reviewer `demo.reviewer@example.com` → `/review` (curriculum with answer keys, read-only, no student data). Not shown on the login page: ask the team for the password, or set `DEMO_TRIAL_REVIEWER_PASSWORD` in `web/.env.local` and run `npm run seed:demo` to set a new one. |
+| CIC admin | `/login?next=/admin` with the demo admin `demo.admin@example.com` → `/admin` (every school and cohort, grant-report CSVs, curriculum editor with publishing, add schools and accounts). Not shown on the login page because it has full powers: ask the team for the password, or set `DEMO_TRIAL_ADMIN_PASSWORD` in `web/.env.local` and run `npm run seed:demo` to set a new one. A second admin, `cic.admin@example.com`, has a private password (`npm run seed:demo` prints it once, or set `DEMO_ADMIN_PASSWORD` in `web/.env.local` first). |
 | Public catalog | `/curriculum` — short read-only catalog, no sign-in |
 
 **What a CIC admin can do** (`/admin`, sign in via the **CIC Admin** button on the home page):

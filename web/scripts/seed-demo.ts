@@ -5,8 +5,10 @@
  *
  * Creates:
  *   - a trial teacher with the sample Maryvale class        (public login)
- *   - a trial external reviewer (read-only curriculum)       (public login)
- *   - a trial CIC admin with full powers, for the demo           (public login)
+ *   - a demo external reviewer (read-only curriculum), NOT shown on /login
+ *     (password from DEMO_TRIAL_REVIEWER_PASSWORD, or generated and printed once)
+ *   - a demo CIC admin with full powers, NOT shown on /login (password from
+ *     DEMO_TRIAL_ADMIN_PASSWORD, or generated and printed once)
  *   - the owner's real CIC admin, with full powers            (PRIVATE password)
  *   - two more partner schools with their own teachers and cohorts
  *
@@ -20,13 +22,14 @@ import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { cohortProgress, cohortRoster, EXTRA_COHORTS } from "../src/lib/demo-cohorts";
 import { demoClass, demoProgress } from "../src/lib/demo-data";
-import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "../src/lib/demo-accounts";
+import {
+  DEMO_ADMIN_EMAIL,
+  DEMO_REVIEWER_EMAIL,
+  DEMO_TEACHER_EMAIL,
+  DEMO_TEACHER_PASSWORD,
+} from "../src/lib/demo-accounts";
 import type { RosterStudent, StudentProgress } from "../src/lib/types";
 
-export const DEMO_TEACHER_EMAIL = "demo.teacher@example.com";
-export const DEMO_TEACHER_PASSWORD = "CICdemo-2026!";
-export const DEMO_REVIEWER_EMAIL = "demo.reviewer@example.com";
-export const DEMO_REVIEWER_PASSWORD = "CICreview-2026!";
 export const OWNER_ADMIN_EMAIL = "cic.admin@example.com";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -215,15 +218,19 @@ async function main() {
     });
   }
 
-  // External reviewer (public trial login: curriculum only, no student data).
-  await ensureUser(DEMO_REVIEWER_EMAIL, {
+  // Demo external reviewer (private: not on /login). Keeps its current password unless one is set.
+  const demoReviewer = await ensureUser(DEMO_REVIEWER_EMAIL, {
     role: "reviewer",
     displayName: "Dana Whitfield (reviewer)",
-    password: DEMO_REVIEWER_PASSWORD,
+    password: process.env.DEMO_TRIAL_REVIEWER_PASSWORD || undefined,
   });
 
-  // Trial CIC admin (public login, limited by the server: see lib/demo-accounts.ts).
-  await ensureUser(DEMO_ADMIN_EMAIL, { role: "admin", displayName: "CIC Admin (demo)", password: DEMO_ADMIN_PASSWORD });
+  // Demo CIC admin (private: not on /login). Keeps its current password unless one is set.
+  const demoAdmin = await ensureUser(DEMO_ADMIN_EMAIL, {
+    role: "admin",
+    displayName: "CIC Admin (demo)",
+    password: process.env.DEMO_TRIAL_ADMIN_PASSWORD || undefined,
+  });
 
   // The owner's real admin (private password).
   const admin = await ensureUser(OWNER_ADMIN_EMAIL, {
@@ -234,8 +241,10 @@ async function main() {
 
   console.log("\nTrial logins:");
   console.log(`  Teacher   ${DEMO_TEACHER_EMAIL}  (public, shown on /login)`);
-  console.log(`  Reviewer  ${DEMO_REVIEWER_EMAIL}  (public, shown on /login)`);
-  console.log(`  Admin     ${DEMO_ADMIN_EMAIL}  (public, full powers: rotate after the demo)`);
+  console.log(`  Reviewer  ${DEMO_REVIEWER_EMAIL}  (private demo reviewer)`);
+  if (demoReviewer.newPassword) console.log(`            password (shown once, save it): ${demoReviewer.newPassword}`);
+  console.log(`  Admin     ${DEMO_ADMIN_EMAIL}  (private demo admin, full powers)`);
+  if (demoAdmin.newPassword) console.log(`            password (shown once, save it): ${demoAdmin.newPassword}`);
   console.log(`  Owner     ${OWNER_ADMIN_EMAIL}  (private)`);
   if (admin.newPassword) console.log(`            password (shown once, save it): ${admin.newPassword}`);
   else console.log("            password unchanged (set DEMO_ADMIN_PASSWORD in .env.local to reset it)");

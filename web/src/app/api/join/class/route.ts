@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { DEMO_CLASS_CODE } from "@/lib/demo-data";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 /**
@@ -13,6 +14,8 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { code?: unknown } | null;
   const code = typeof body?.code === "string" ? body.code.replace(/[^a-z0-9]/gi, "").toUpperCase() : "";
   if (!/^[A-Z0-9]{6}$/.test(code)) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  // The shared sample class runs in the browser only, so visitors can't save to it.
+  if (code === DEMO_CLASS_CODE) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const { data, error } = await db
     .from("classes")
