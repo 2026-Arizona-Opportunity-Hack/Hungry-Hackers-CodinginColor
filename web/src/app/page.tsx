@@ -102,13 +102,13 @@ export default function Welcome() {
                 <LinkButton href="/join" variant="light" className="min-h-14 text-lg">
                   <KeyRound aria-hidden className="size-5" /> Join with a class code
                 </LinkButton>
-                <LinkButton href="/teach" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
+                <LinkButton href="/teach" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-cic-darker-hover">
                   <GraduationCap aria-hidden className="size-5" /> I&apos;m a teacher
                 </LinkButton>
-                <LinkButton href="/start" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
+                <LinkButton href="/start" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-cic-darker-hover">
                   <BookOpen aria-hidden className="size-5" /> Learn on my own
                 </LinkButton>
-                <LinkButton href="/admin" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-[#004d26]">
+                <LinkButton href="/admin" className="min-h-14 bg-cic-darker text-lg ring-2 ring-white/40 ring-inset hover:bg-cic-darker-hover">
                   <ShieldCheck aria-hidden className="size-5" /> CIC Admin
                 </LinkButton>
               </div>

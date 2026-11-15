@@ -389,7 +389,7 @@ export default function LessonPlayer() {
                 <p className="text-sm font-bold text-cic-muted">Wrap-up</p>
                 <p className="font-display text-3xl">{pct(gain.post)}</p>
               </div>
-              <div className="rounded-2xl bg-cic-darker p-4 text-center text-white shadow-[0_4px_0_#003d1f]">
+              <div className="rounded-2xl bg-cic-darker p-4 text-center text-white shadow-[0_4px_0_color-mix(in_srgb,var(--color-cic-darker),black_35%)]">
                 <p className="flex items-center justify-center gap-1 text-sm font-bold">
                   <TrendingUp aria-hidden className="size-4" /> Learning gain
                 </p>

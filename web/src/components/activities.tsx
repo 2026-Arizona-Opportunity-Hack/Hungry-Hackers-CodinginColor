@@ -112,7 +112,7 @@ function QuestionCard({
                 correct
                   ? "animate-pop border-cic-dark bg-cic-tint shadow-slab"
                   : wrong
-                    ? "animate-shake border-cic-danger bg-cic-danger-bg shadow-[0_4px_0_#a4161a]"
+                    ? "animate-shake border-cic-danger bg-cic-danger-bg shadow-[0_4px_0_var(--color-cic-danger)]"
                     : checked
                       ? "translate-y-[2px] border-cic-dark bg-cic-tint shadow-[0_2px_0_var(--color-cic-dark)]"
                       : "border-cic-line bg-white shadow-slab-gray hover:bg-cic-tint",

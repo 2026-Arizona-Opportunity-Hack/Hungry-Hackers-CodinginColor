@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* `dark:` utilities follow the in-app theme switch, not just the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /*
  * Coding in Color brand tokens (Brand Guidelines v2), adjusted for WCAG 2.2 AA:
  * - cic-dark  #007A3D  5.5:1 on white  -> buttons, headings, links, nav
@@ -12,6 +15,8 @@
   --color-cic-dark: #007a3d;
   --color-cic-darker: #005c2e;
   --color-cic-tint: #e6f4ed;
+  --color-cic-hover: #008544;
+  --color-cic-darker-hover: #004d26;
   --color-cic-line: #c8c8c8;
   --color-cic-muted: #595959;
   --color-cic-warn-bg: #fff4e5;
@@ -110,23 +115,87 @@
 
 :root {
   color-scheme: light;
+  /* Python syntax colors (light): all >= 4.5:1 on white. */
+  --cm-keyword: #7a1f8f;
+  --cm-string: #8a4b00;
+  --cm-number: #005c99;
+  --cm-comment: #595959;
+  --cm-name: #000000;
+  --cm-def: #005c2e;
+  --cm-active-line: #f3faf6;
+}
+
+/*
+ * Dark theme. Pages use bg-white / text-black / cic-* tokens, so flipping the
+ * tokens here re-themes every screen at once. "white" becomes the dark surface
+ * and "black" the light text; the brand greens get lighter so text on them
+ * (text-white = dark ink) and green text on the surface both stay >= 4.5:1.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-white: #111a15;
+  --color-black: #edf3ef;
+  --color-cic-green: #3ccb78;
+  --color-cic-dark: #72dca0;
+  --color-cic-hover: #94e8b8;
+  --color-cic-darker: #3fae6e;
+  --color-cic-darker-hover: #52c282;
+  --color-cic-tint: #1c3227;
+  --color-cic-line: #5f7268;
+  --color-cic-muted: #b4c1ba;
+  --color-cic-warn-bg: #3a2a10;
+  --color-cic-warn: #ffc27a;
+  --color-cic-danger-bg: #3d1517;
+  --color-cic-danger: #ff9a9c;
+  --cm-keyword: #e0a6f0;
+  --cm-string: #ffc27a;
+  --cm-number: #8cc8ff;
+  --cm-comment: #b4c1ba;
+  --cm-name: #edf3ef;
+  --cm-def: #72dca0;
+  --cm-active-line: #17261e;
+}
+
+/* Text size: every size and spacing in the app is in rem, so scaling the root scales it all. */
+html { font-size: 100%; }
+html[data-text="lg"] { font-size: 112.5%; }
+html[data-text="xl"] { font-size: 125%; }
+html[data-text="xxl"] { font-size: 150%; }
+
+/* Easy-read font: Lexend was designed to reduce visual stress and improve reading fluency. */
+:root[data-font="readable"] {
+  --font-sans: var(--font-lexend), Arial, Helvetica, sans-serif;
+  --font-display: var(--font-lexend), Arial, Helvetica, sans-serif;
+}
+:root[data-font="readable"] .font-display {
+  font-weight: 700;
+}
+
+/* Wider spacing: WCAG 1.4.12 text-spacing values, which help many dyslexic readers. */
+:root[data-spacing="wide"] body {
+  line-height: 1.8;
+  letter-spacing: 0.06em;
+  word-spacing: 0.16em;
+}
+:root[data-spacing="wide"] p {
+  margin-block-end: 0.5em;
 }
 
 html {
-  background: #ffffff;
+  background: var(--color-white);
 }
 
 body {
-  background: #ffffff;
-  color: #000000;
+  background: var(--color-white);
+  color: var(--color-black);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
 }
 
 /* Visible, consistent focus for keyboard users (WCAG 2.4.7 / 2.4.11). */
 :focus-visible {
-  outline: 3px solid #007a3d;
+  outline: 3px solid var(--color-cic-dark);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -136,8 +205,8 @@ body {
   left: 8px;
   top: -48px;
   z-index: 100;
-  background: #007a3d;
-  color: #fff;
+  background: var(--color-cic-dark);
+  color: var(--color-white);
   padding: 8px 16px;
   border-radius: 8px;
   font-weight: 700;
@@ -163,12 +232,23 @@ body {
     display: none;
   }
 }
+/* Same as the OS setting, but switchable from Display settings. */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+}
+:root[data-motion="reduce"] .confetti {
+  display: none;
+}
 
 .cm-editor {
-  font-size: 15px;
+  font-size: 0.9375rem;
   min-height: 220px;
 }
 .cm-editor.cm-focused {
-  outline: 3px solid #007a3d !important;
+  outline: 3px solid var(--color-cic-dark) !important;
   outline-offset: 2px;
 }

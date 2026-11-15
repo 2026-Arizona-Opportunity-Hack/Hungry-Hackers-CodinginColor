@@ -189,7 +189,7 @@ export function CodeActivity({ activity, onComplete, onFailedCheck }: ActivityPr
           <h2 id="console" className="text-sm font-bold">
             Console
           </h2>
-          <pre role="log" aria-live="polite" className="mt-1 min-h-24 overflow-x-auto rounded-xl bg-[#0f2a1c] p-4 font-mono text-sm text-white">
+          <pre role="log" aria-live="polite" className="mt-1 min-h-24 overflow-x-auto rounded-xl bg-[#0f2a1c] p-4 font-mono text-sm text-[#fff]">
             {busy === "run" && output.length === 0 && (
               <span className="text-[#c8e6d4]">
                 <Loading inline label="Running" />
