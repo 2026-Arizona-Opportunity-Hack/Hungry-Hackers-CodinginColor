@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView, highlightActiveLine, keymap, lineNumbers } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
@@ -11,6 +11,9 @@ import { python } from "@codemirror/lang-python";
  * Python editor. Tab indents; to leave the editor with the keyboard press
  * Esc and then Tab (CodeMirror's built-in escape hatch), so it's never a
  * keyboard trap (WCAG 2.1.2).
+ *
+ * Copy, cut, paste and drag-and-drop are blocked so students type their own
+ * code; a short note explains why when they try.
  */
 export function CodeEditor({
   value,
@@ -27,6 +30,7 @@ export function CodeEditor({
   const view = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     if (!host.current) return;
@@ -47,6 +51,18 @@ export function CodeEditor({
             "aria-label": label,
             ...(describedBy ? { "aria-describedby": describedBy } : {}),
           }),
+          EditorView.domEventHandlers(
+            Object.fromEntries(
+              (["copy", "cut", "paste", "drop", "dragstart"] as const).map((type) => [
+                type,
+                (e: Event) => {
+                  e.preventDefault();
+                  setBlocked(true);
+                  return true; // stop CodeMirror handling it too
+                },
+              ]),
+            ),
+          ),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) onChangeRef.current(u.state.doc.toString());
           }),
@@ -74,5 +90,14 @@ export function CodeEditor({
     }
   }, [value]);
 
-  return <div ref={host} />;
+  return (
+    <div>
+      <div ref={host} />
+      {blocked && (
+        <p role="status" className="mt-2 text-sm font-bold text-cic-muted">
+          Copy and paste are turned off here. Typing the code yourself is how it sticks!
+        </p>
+      )}
+    </div>
+  );
 }

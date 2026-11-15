@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, ExternalLink, Lock } from "lucide-react";
+import { Check, ChevronRight, Lock } from "lucide-react";
 import { HeroPanel, Loading, ProgressBar, cx } from "@/components/ui";
 import { STAGE_ICONS } from "@/components/stage-icon";
 import { moduleComplete, moduleDoneCount, moduleUnlocked } from "@/lib/analytics";
@@ -115,28 +115,6 @@ export default function CourseRoadmap() {
           );
         })}
       </ol>
-
-      <section className="mt-12" aria-labelledby="more">
-        <h2 id="more" className="font-display text-2xl text-cic-dark">
-          Keep learning
-        </h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {course.resources.map((r) => (
-            <li key={r.href}>
-              <a
-                href={r.href}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border-2 border-cic-line bg-white px-4 py-3 font-bold text-cic-dark shadow-slab-gray hover:bg-cic-tint"
-              >
-                {r.label}
-                <ExternalLink aria-hidden className="size-5 shrink-0" />
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

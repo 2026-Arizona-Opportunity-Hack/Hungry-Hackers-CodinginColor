@@ -37,8 +37,10 @@ export default function TeacherOverview() {
 
   async function copyCode() {
     try {
-      await navigator.clipboard.writeText(`Join our class at ${joinUrl} with code ${cls.code}`);
+      // The button sits next to the code, so copy just the code.
+      await navigator.clipboard.writeText(cls.code);
       setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
     }
@@ -66,7 +68,7 @@ export default function TeacherOverview() {
             <p className="text-sm font-bold text-cic-muted">Students join at {joinUrl} with</p>
             <div className="mt-1 flex flex-wrap items-center gap-3">
               <p className="font-display text-4xl tracking-[0.2em] text-cic-darker">{cls.code}</p>
-              <Button variant="secondary" onClick={copyCode} className="min-h-11 px-4">
+              <Button variant="secondary" onClick={copyCode} className="min-h-11 px-4" aria-label={copied ? "Class code copied" : "Copy class code"}>
                 <Copy aria-hidden className="size-4" /> {copied ? "Copied!" : "Copy"}
               </Button>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, Copy, Timer } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RosterImport } from "@/components/roster-import";
 import { Button, Card, LinkButton, PageTitle, cx } from "@/components/ui";
@@ -12,26 +12,8 @@ import { selectClass } from "@/lib/use-teacher";
 
 const STEPS = ["Class details", "Add students", "Pick modules", "Share the code"];
 
-function Elapsed({ since, stopped }: { since: number; stopped: number | null }) {
-  const [now, setNow] = useState(since);
-  useEffect(() => {
-    if (stopped) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [stopped]);
-  const secs = Math.max(0, Math.round(((stopped ?? now) - since) / 1000));
-  return (
-    <span className="inline-flex items-center gap-1 text-sm font-bold text-cic-muted">
-      <Timer aria-hidden className="size-4" />
-      Setup time {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}
-    </span>
-  );
-}
-
 export default function NewClassWizard() {
   const course = getCourses()[0];
-  const [startedAt] = useState(() => Date.now());
-  const [finishedAt, setFinishedAt] = useState<number | null>(null);
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [school, setSchool] = useState("");
@@ -71,7 +53,6 @@ export default function NewClassWizard() {
         });
         selectClass(cls.id);
         setCreated(cls);
-        setFinishedAt(Date.now());
       } catch (e) {
         setError(`We couldn't save the class: ${e instanceof Error ? e.message : "please try again"}.`);
         return;
@@ -86,7 +67,7 @@ export default function NewClassWizard() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageTitle title="Create a class" subtitle={course.title} actions={<Elapsed since={startedAt} stopped={finishedAt} />} />
+      <PageTitle title="Create a class" subtitle={course.title} />
 
       <ol aria-label="Setup steps" className="mb-6 grid grid-cols-4 gap-2">
         {STEPS.map((label, i) => (

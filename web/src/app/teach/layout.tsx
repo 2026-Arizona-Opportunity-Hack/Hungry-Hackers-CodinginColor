@@ -1,9 +1,9 @@
 "use client";
 
-import { BookOpen, LayoutDashboard, LogOut, PlusCircle, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { BookOpen, ChevronDown, LayoutDashboard, LogOut, PlusCircle, School, Users } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { AppShell, type NavItem } from "@/components/app-shell";
-import { Button, Loading } from "@/components/ui";
+import { Button, LinkButton, Loading } from "@/components/ui";
 import { signOutTeacher } from "@/lib/teacher-store";
 import { selectClass, useTeacherClass } from "@/lib/use-teacher";
 
@@ -16,8 +16,11 @@ const NAV: NavItem[] = [
 
 export default function TeachLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const path = usePathname();
   const { ctx, error } = useTeacherClass();
   if (ctx === undefined && !error) return <Loading label="Loading your classes…" />;
+  // The class picker isn't relevant while making a new class.
+  const showSwitcher = ctx && path !== "/teach/new";
 
   async function signOut() {
     await signOutTeacher();
@@ -31,32 +34,43 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
       roleLabel="Teacher"
       topRight={
         <>
-          {ctx && (
-            <>
-              <label htmlFor="class-switcher" className="sr-only">
-                Current class
-              </label>
-              <select
-                id="class-switcher"
-                value={ctx.cls.id}
-                onChange={(e) => selectClass(e.target.value)}
-                className="min-h-11 max-w-[11rem] rounded-xl border-2 border-cic-line bg-white px-2 text-sm font-bold sm:max-w-xs"
-              >
-                {ctx.classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} · {c.school}
-                  </option>
-                ))}
-              </select>
-              <span className="hidden text-sm font-bold md:inline">{ctx.cls.teacherName}</span>
-            </>
-          )}
+          {ctx && <span className="hidden text-sm font-bold md:inline">{ctx.cls.teacherName}</span>}
           <Button variant="ghost" onClick={signOut}>
             <LogOut aria-hidden className="size-4" /> Sign out
           </Button>
         </>
       }
     >
+      {showSwitcher && (
+        <div className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border-2 border-cic-line bg-white p-3 shadow-slab-gray print:hidden">
+          <div className="min-w-0 flex-1">
+            <label htmlFor="class-switcher" className="flex items-center gap-1.5 text-sm font-bold text-cic-muted">
+              <School aria-hidden className="size-4" /> {ctx.classes.length > 1 ? "Change class" : "Your class"}
+            </label>
+            <div className="relative mt-1">
+              <select
+                id="class-switcher"
+                value={ctx.cls.id}
+                onChange={(e) => selectClass(e.target.value)}
+                disabled={ctx.classes.length < 2}
+                className="min-h-11 w-full cursor-pointer appearance-none truncate rounded-xl border-2 border-cic-dark bg-cic-tint py-2 pr-10 pl-3 font-bold text-cic-darker disabled:cursor-default disabled:border-cic-line disabled:bg-white"
+              >
+                {ctx.classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} · {c.school} · code {c.code}
+                  </option>
+                ))}
+              </select>
+              {ctx.classes.length > 1 && (
+                <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-3 size-5 -translate-y-1/2 text-cic-dark" />
+              )}
+            </div>
+          </div>
+          <LinkButton href="/teach/new" variant="secondary">
+            <PlusCircle aria-hidden className="size-4" /> New class
+          </LinkButton>
+        </div>
+      )}
       {children}
     </AppShell>
   );

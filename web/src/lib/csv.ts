@@ -37,7 +37,7 @@ const clean = (s: string) => s.replace(/[<>]/g, "").trim().slice(0, 40);
  * (any common spelling), a single `name` column, or a plain list with no header. Only the first name and
  * last initial are kept — we never store a student's full name.
  */
-export function parseRosterCsv(text: string, seedOffset = 0): RosterParseResult {
+export function parseRosterCsv(text: string, seedOffset = 0, { typedList = false } = {}): RosterParseResult {
   const errors: RosterParseResult["errors"] = [];
   const warnings: RosterParseResult["warnings"] = [];
   const students: RosterStudent[] = [];
@@ -56,7 +56,8 @@ export function parseRosterCsv(text: string, seedOffset = 0): RosterParseResult 
   // No recognizable header? Treat every line as a student, e.g. "Ana Lopez",
   // "Ana, Lopez" or a quoted "Ana, Lopez".
   const headerless = firstCol === -1 && nameCol === -1;
-  if (headerless) {
+  // A typed list of names is expected to have no header, so don't warn about it.
+  if (headerless && !typedList) {
     warnings.push({ row: headerIdx + 1, message: "No header row found, so every line was read as a student (first name, then last name)." });
   }
 
