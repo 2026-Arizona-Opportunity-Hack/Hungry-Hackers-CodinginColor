@@ -71,6 +71,9 @@ export default function Welcome() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Logo className="h-9 w-auto" />
           <nav aria-label="Quick links" className="flex gap-1 text-sm font-bold">
+            <Link href="/judges" className="rounded-xl bg-cic-tint px-3 py-2 text-cic-darker hover:bg-cic-line">
+              For judges
+            </Link>
             <Link href="/curriculum" className="hidden rounded-xl px-3 py-2 text-cic-dark hover:bg-cic-tint sm:block">
               Browse curriculum
             </Link>
