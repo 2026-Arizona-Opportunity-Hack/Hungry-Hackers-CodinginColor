@@ -51,6 +51,8 @@ Judges score **Scope, Documentation, Polish and Security**, plus a separate **Ac
 
 **CIC Learn** — a self-paced course platform for Coding in Color. A teacher creates a class, uploads a roster CSV and shares one class code. Students join with the code, pick their name and tap a 3-picture code (no email, no passwords), then work through each module on their own: warm-up quiz → slides → quick check → practice or real Python in the browser → exit question → wrap-up quiz. Teachers see live progress, **learning gain** (wrap-up minus warm-up), concept mastery and a "who needs help" list. An **Insights** page (`/teach/insights`) adds a student × activity heat map (score or time on task), activity per day, time per module against the estimate, and a "worth a look" list that flags very fast, back-to-back or suspiciously sudden results as conversation starters, not proof of cheating. The first course, *Intro to Artificial Intelligence*, is built from CIC's own slide deck.
 
+**For judges:** `/judges` lists every requirement in the brief, where it lives in the app and how to try it, including the admin-only screens.
+
 **Try the demo** (`npm run dev`, then open http://localhost:3000):
 
 | Role | How |
